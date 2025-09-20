@@ -3,9 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>유아용 영어 단어 · 10개씩 보기 + TTS (Pause/Resume 고정판)</title>
+  <title>유아용 영어 단어 · 10개씩 보기 + TTS</title>
+  <meta name="description" content="유아용 영어 단어를 10개씩 보고 듣는 웹앱. 카테고리별 50단어, TTS 재생/일시정지/정지 지원. 모바일(안드로이드) 워밍업 버튼 포함." />
+  <link rel="preload" href="app.js?v=2" as="script">
   <style>
-    :root{ --bg:#0b1020; --card:#121933; --text:#e8ecff; --sub:#a7b1d8; --accent:#7aa2ff; --muted:#2a335a; }
+    :root{
+      --bg:#0b1020; --card:#121933; --text:#e8ecff; --sub:#a7b1d8; --accent:#7aa2ff; --muted:#2a335a;
+    }
     *{box-sizing:border-box}
     body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Pretendard,Noto Sans KR,Apple SD Gothic Neo,sans-serif;background:linear-gradient(180deg,#0b1020 0%,#0f1730 100%);color:var(--text)}
     .wrap{max-width:1100px;margin:0 auto;padding:20px}
@@ -30,6 +34,10 @@
     @media (max-width:1120px){ .grid{grid-template-columns:repeat(4,1fr)} }
     @media (max-width:820px){ .grid{grid-template-columns:repeat(3,1fr)} }
     @media (max-width:480px){ .grid{grid-template-columns:repeat(2,1fr)} }
+    /* 오류 메시지/안내 */
+    #err{display:none;margin-top:10px;background:#471a1a;border:1px solid #a33;padding:10px;border-radius:8px;color:#ffd9d9;white-space:pre-wrap;font-family:ui-monospace, SFMono-Regular, Menlo, monospace;font-size:12px}
+    #inappWarn{display:none;margin-top:10px;padding:10px;border-radius:8px;background:#3a2a2a;color:#ffd9d9;}
+    #ttsInitBtn{background:#1e2a55}
   </style>
 </head>
 <body>
@@ -41,19 +49,27 @@
       </div>
       <div class="controls">
         <label class="badge">카테고리 50단어</label>
-        <select id="category"></select>
-        <button id="shuffleBtn">🔀 섞기</button>
-        <button id="playAllBtn">▶ 전체 재생(카테고리)</button>
-        <button id="pauseBtn">⏯ 재생/일시정지</button>
-        <button id="stopBtn">⏹ 정지</button>
+        <select id="category" aria-label="카테고리 선택"></select>
+        <button id="shuffleBtn" title="순서 섞기">🔀 섞기</button>
+        <button id="playAllBtn" title="카테고리 전체(50개) 영어→한국어 순서 재생">▶ 전체 재생(카테고리)</button>
+        <button id="pauseBtn" title="재생/일시정지">⏯ 재생/일시정지</button>
+        <button id="stopBtn" title="정지">⏹ 정지</button>
+        <button id="ttsInitBtn" title="모바일에서 TTS 초기화">🔊 TTS 활성화</button>
       </div>
     </header>
+
+    <div id="inappWarn">
+      인앱 브라우저에서는 음성재생이 제한될 수 있어요.
+      <a href="https://masyatt.github.io/kids-words-tts/" target="_blank" rel="noopener" style="color:#fff;text-decoration:underline;">
+        👉 새 탭(크롬)에서 열기
+      </a>
+    </div>
 
     <div class="bar">
       <span class="badge">읽기 속도</span>
       <input id="rate" type="range" min="0.6" max="1.4" step="0.1" value="1" />
       <span id="rateVal">1.0x</span>
-      <span class="hint">영어 ▶ 한국어 순서로 읽어요</span>
+      <span class="hint">영어 ▶ 한국어 순서로 읽어요 <span id="ttsWarn"></span></span>
     </div>
 
     <div id="grid" class="grid" role="list" aria-live="polite"></div>
@@ -65,156 +81,11 @@
       </div>
       <div><span id="pageInfo" class="badge">- / -</span></div>
     </div>
+
+    <div id="err" aria-live="polite"></div>
+    <p class="hint">Tip: ▶ EN/KO 버튼으로 각 단어를 들을 수 있어요. ⏯로 일시정지/재개, ⏹로 정지합니다. 모바일에서는 먼저 <b>🔊 TTS 활성화</b>를 눌러 주세요.</p>
   </div>
 
-  <script>
-    // ====== 데이터 (샘플: 3 카테고리/각 50개) ======
-    const WORDS = {
-      "동물": [["cat","고양이"],["dog","개"],["bird","새"],["fish","물고기"],["rabbit","토끼"],
-        ["horse","말"],["cow","소"],["pig","돼지"],["sheep","양"],["goat","염소"],
-        ["chicken","닭"],["duck","오리"],["goose","거위"],["turkey","칠면조"],["deer","사슴"],
-        ["bear","곰"],["lion","사자"],["tiger","호랑이"],["elephant","코끼리"],["giraffe","기린"],
-        ["monkey","원숭이"],["panda","판다"],["zebra","얼룩말"],["kangaroo","캥거루"],["koala","코알라"],
-        ["fox","여우"],["wolf","늑대"],["dolphin","돌고래"],["whale","고래"],["shark","상어"],
-        ["penguin","펭귄"],["seal","물개"],["turtle","거북이"],["frog","개구리"],["snake","뱀"],
-        ["crocodile","악어"],["hippo","하마"],["rhino","코뿔소"],["camel","낙타"],["donkey","당나귀"],
-        ["mouse","생쥐"],["rat","쥐"],["squirrel","다람쥐"],["bat","박쥐"],["owl","올빼미"],
-        ["eagle","독수리"],["bee","벌"],["ant","개미"],["butterfly","나비"],["spider","거미"]],
-      "날씨": [["sun","해"],["sunny","맑은"],["cloud","구름"],["cloudy","흐린"],["rain","비"],
-        ["rainy","비 오는"],["drizzle","이슬비"],["shower","소나기"],["thunder","천둥"],["lightning","번개"],
-        ["thunderstorm","뇌우"],["storm","폭풍"],["typhoon","태풍"],["hurricane","허리케인"],["wind","바람"],
-        ["windy","바람 부는"],["breeze","산들바람"],["gale","강풍"],["snow","눈"],["snowy","눈 오는"],
-        ["sleet","진눈깨비"],["hail","우박"],["mist","옅은 안개"],["fog","안개"],["foggy","안개 낀"],
-        ["rainbow","무지개"],["temperature","기온"],["hot","더운"],["warm","따뜻한"],["cool","서늘한"],
-        ["cold","추운"],["freeze","얼다"],["freezing","영하의"],["frost","서리"],["icy","얼음 낀"],
-        ["humid","습한"],["humidity","습도"],["dry","건조한"],["drought","가뭄"],["flood","홍수"],
-        ["overcast","회색 구름 낀"],["clear","쾌청한"],["sprinkle","가랑비"],["blizzard","눈보라"],["heatwave","폭염"],
-        ["snowfall","강설"],["raindrop","빗방울"],["dew","이슬"],["puddle","물웅덩이"],["forecast","일기예보"]],
-      "숫자": Array.from({length:50}, (_,i)=>{
-        const en=["one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen","twenty","twenty-one","twenty-two","twenty-three","twenty-four","twenty-five","twenty-six","twenty-seven","twenty-eight","twenty-nine","thirty","thirty-one","thirty-two","thirty-three","thirty-four","thirty-five","thirty-six","thirty-seven","thirty-eight","thirty-nine","forty","forty-one","forty-two","forty-three","forty-four","forty-five","forty-six","forty-seven","forty-eight","forty-nine","fifty"];
-        const ko=["하나","둘","셋","넷","다섯","여섯","일곱","여덟","아홉","열","열하나","열둘","열셋","열넷","열다섯","열여섯","열일곱","열여덟","열아홉","스무","스물하나","스물둘","스물셋","스물넷","스물다섯","스물여섯","스물일곱","스물여덟","스물아홉","서른","서른하나","서른둘","서른셋","서른넷","서른다섯","서른여섯","서른일곱","서른여덟","서른아홉","마흔","마흔하나","마흔둘","마흔셋","마흔넷","마흔다섯","마흔여섯","마흔일곱","마흔여덟","마흔아홉","쉰"];
-        return [en[i], ko[i]];
-      })
-    };
-
-    // ====== 상태 ======
-    const $ = (id)=>document.getElementById(id);
-    const categorySel=$('category'), grid=$('grid'), pageInfo=$('pageInfo');
-    const nextBtn=$('nextBtn'), prevBtn=$('prevBtn');
-    const shuffleBtn=$('shuffleBtn'), playAllBtn=$('playAllBtn'), pauseBtn=$('pauseBtn'), stopBtn=$('stopBtn');
-    const rateEl=$('rate'), rateVal=$('rateVal');
-
-    let currentCategory = Object.keys(WORDS)[0];
-    let order = [...Array(WORDS[currentCategory].length).keys()];
-    let page = 0;
-
-    // 재생 상태
-    let playQueue = [];
-    let isPlaying = false;
-    let isPaused = false;   // ★ 논리적 일시정지 플래그
-    let lastMode = 'all';   // 'all' | 'page' — 재개 시 어떤 큐를 만들지 기억
-
-    // ====== TTS 가드 ======
-    const hasTTS = ('speechSynthesis' in window) && (typeof window.SpeechSynthesisUtterance !== 'undefined');
-    function synth(){ return hasTTS ? window.speechSynthesis : null; }
-
-    let voices = [];
-    function refreshVoices(){ try{ const s=synth(); voices = s && s.getVoices ? s.getVoices() : []; }catch(_){ voices=[]; } }
-    refreshVoices(); if(hasTTS && synth()) synth().onvoiceschanged = refreshVoices;
-
-    function pickVoice(lang){ if(!voices.length) return null; const v=voices.find(v=>v.lang && v.lang.toLowerCase().startsWith(lang)); return v||voices[0]; }
-
-    function enqueuePair(en,ko){ playQueue.push({text:en,lang:'en'},{text:ko,lang:'ko'}); }
-    function buildCategoryQueue(){ playQueue=[]; WORDS[currentCategory].forEach(([en,ko])=>enqueuePair(en,ko)); lastMode='all'; return playQueue.length; }
-    function buildPageQueue(){ playQueue=[]; const start=page*10; const list=WORDS[currentCategory]; order.slice(start,start+10).forEach(i=>{ const [en,ko]=list[i]; enqueuePair(en,ko); }); lastMode='page'; return playQueue.length; }
-
-    function startQueue(){
-      if(playQueue.length===0){ isPlaying=false; updateControls(); return; }
-      const s = synth(); if(!s){ isPlaying=false; playQueue=[]; updateControls(); return; }
-      isPlaying = true;
-      const {text,lang} = playQueue.shift();
-      const u = new SpeechSynthesisUtterance(text); const v=pickVoice(lang); if(v) u.voice=v;
-      u.lang=(lang==='en'?'en-US':'ko-KR'); u.rate=parseFloat(rateEl.value||'1');
-      u.onend = ()=> setTimeout(()=>{
-        if(!isPlaying || isPaused){ updateControls(); return; } // ★ pause 중이면 진행 중단
-        if(playQueue.length>0) startQueue(); else { isPlaying=false; updateControls(); }
-      },120);
-      s.speak(u);
-      updateControls();
-    }
-
-    function stopAll(){ try{ const s=synth(); if(s) s.cancel(); }catch(_){}
-      isPlaying=false; isPaused=false; playQueue=[]; updateControls(); }
-
-    function updateControls(){
-      const s = synth();
-      if(!s){ pauseBtn.textContent='▶ 재생'; return; }
-      pauseBtn.textContent = (isPaused ? '▶ 재개' : (s.speaking ? '⏸ 일시정지' : '▶ 재생'));
-    }
-
-    // ====== UI 렌더 ======
-    function renderOptions(){
-      categorySel.innerHTML = Object.keys(WORDS).map(k=>`<option value="${k}">${k}</option>`).join('');
-      categorySel.value = currentCategory;
-    }
-    function render(){
-      const list = WORDS[currentCategory]; const start = page*10; const slice = order.slice(start,start+10);
-      grid.innerHTML='';
-      slice.forEach(i=>{
-        const [en,ko]=list[i];
-        const card=document.createElement('div'); card.className='card';
-        const enEl=document.createElement('div'); enEl.className='en'; enEl.textContent=en;
-        const koEl=document.createElement('div'); koEl.className='ko'; koEl.textContent=ko;
-        const tts=document.createElement('div'); tts.className='tts';
-        const b1=document.createElement('button'); b1.textContent='▶ EN'; b1.addEventListener('click',()=>{ const s=synth(); if(s && (s.speaking||s.paused)) return; /* 겹침 방지 */ speak(en,'en'); });
-        const b2=document.createElement('button'); b2.textContent='▶ KO'; b2.addEventListener('click',()=>{ const s=synth(); if(s && (s.speaking||s.paused)) return; speak(ko,'ko'); });
-        tts.appendChild(b1); tts.appendChild(b2);
-        card.appendChild(enEl); card.appendChild(koEl); card.appendChild(tts);
-        grid.appendChild(card);
-      });
-      const totalPages=Math.ceil(order.length/10); pageInfo.textContent=`${page+1} / ${totalPages}`;
-    }
-
-    function speak(text,lang){
-      try{
-        const s=synth(); if(!s) return;
-        const u=new SpeechSynthesisUtterance(text); const v=pickVoice(lang); if(v) u.voice=v;
-        u.lang=(lang==='en'?'en-US':'ko-KR'); u.rate=parseFloat(rateEl.value||'1'); s.speak(u);
-      }catch(_){}
-    }
-
-    // ====== 이벤트 ======
-    categorySel.addEventListener('change', ()=>{ currentCategory=categorySel.value; order=[...Array(WORDS[currentCategory].length).keys()]; page=0; stopAll(); render(); });
-    nextBtn.addEventListener('click', ()=>{ const tp=Math.ceil(order.length/10); page=(page+1)%tp; stopAll(); render(); });
-    prevBtn.addEventListener('click', ()=>{ const tp=Math.ceil(order.length/10); page=(page-1+tp)%tp; stopAll(); render(); });
-    shuffleBtn.addEventListener('click', ()=>{ for(let i=order.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [order[i],order[j]]=[order[j],order[i]]; } page=0; stopAll(); render(); });
-    rateEl.addEventListener('input', ()=>{ rateVal.textContent=(parseFloat(rateEl.value)||1).toFixed(1)+'x'; });
-
-    playAllBtn.addEventListener('click', ()=>{ stopAll(); buildCategoryQueue(); isPaused=false; startQueue(); });
-
-    // ★ 핵심: 논리 일시정지 — cancel()로 즉시 멈추고, 큐는 유지 → 재개 시 startQueue()
-    pauseBtn.addEventListener('click', ()=>{
-      const s=synth(); if(!s) return;
-      if(!isPaused){ // 일시정지 요청
-        isPaused = true;
-        try{ s.cancel(); }catch(_){}
-      }else{ // 재개
-        isPaused = false;
-        if(playQueue.length===0){
-          // 큐가 비었으면 마지막 모드 기준으로 재구성
-          if(lastMode==='page') buildPageQueue(); else buildCategoryQueue();
-        }
-        startQueue();
-      }
-      updateControls();
-    });
-
-    stopBtn.addEventListener('click', stopAll);
-
-    // 초기화
-    (function init(){
-      renderOptions(); render(); updateControls();
-    })();
-  </script>
+  <script src="app.js?v=2" defer></script>
 </body>
 </html>

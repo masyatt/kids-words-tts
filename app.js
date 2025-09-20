@@ -1,14 +1,24 @@
-// app.js — 깃허브/티스토리 임베드 대응(인라인 스크립트 금지), Pause/Resume 안정화
+// app.js v2 — 외부 JS, 모바일 TTS 워밍업 + 인앱 경고 + Pause/Resume 안정화
 (function(){
   'use strict';
 
-  // === 오류 출력(임베드 환경 디버깅용) ===
+  // ---- 에러 오버레이 ----
   window.addEventListener('error', function(e){
     const box = document.getElementById('err');
     if(!box) return;
     box.style.display = 'block';
     box.textContent = '[에러] ' + (e.message||'') + '\n' + (e.filename||'') + ':' + (e.lineno||'') + ':' + (e.colno||'');
   });
+
+  // ---- 인앱 브라우저 경고 ----
+  (function showInAppWarning(){
+    const ua = navigator.userAgent || '';
+    const inApp = /KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line|DaumApp/i.test(ua);
+    if(inApp){
+      const el = document.getElementById('inappWarn');
+      if(el) el.style.display = 'block';
+    }
+  })();
 
   // ====== 데이터(카테고리별 50단어) ======
   const WORDS = {
@@ -104,12 +114,12 @@
     ]
   };
 
-  // ====== 상태 ======
+  // ====== 상태/DOM ======
   const $ = (id)=>document.getElementById(id);
   const categorySel=$('category'), grid=$('grid'), pageInfo=$('pageInfo');
   const nextBtn=$('nextBtn'), prevBtn=$('prevBtn');
   const shuffleBtn=$('shuffleBtn'), playAllBtn=$('playAllBtn'), pauseBtn=$('pauseBtn'), stopBtn=$('stopBtn');
-  const rateEl=$('rate'), rateVal=$('rateVal');
+  const rateEl=$('rate'), rateVal=$('rateVal'), ttsInitBtn=$('ttsInitBtn');
 
   let currentCategory = Object.keys(WORDS)[0];
   let order = [...Array(WORDS[currentCategory].length).keys()];
@@ -121,7 +131,7 @@
   let isPaused = false;
   let lastMode = 'all'; // 'all' | 'page'
 
-  // ====== TTS 가드 ======
+  // ====== TTS 가드/워밍업 ======
   const hasTTS = ('speechSynthesis' in window) && (typeof window.SpeechSynthesisUtterance !== 'undefined');
   function synth(){ return hasTTS ? window.speechSynthesis : null; }
 
@@ -129,15 +139,51 @@
   function refreshVoices(){ try{ const s=synth(); voices = s && s.getVoices ? s.getVoices() : []; }catch(_){ voices=[]; } }
   refreshVoices(); if(hasTTS && synth()) synth().onvoiceschanged = refreshVoices;
 
+  function voicesReady(timeoutMs=2000){
+    return new Promise(resolve=>{
+      const s = synth(); if(!s) return resolve(false);
+      let ok = false;
+      function check(){
+        try{
+          const v = s.getVoices ? s.getVoices() : [];
+          if(v && v.length){ ok = true; resolve(true); }
+        }catch(e){}
+        if(!ok) setTimeout(check, 100);
+      }
+      check();
+      setTimeout(()=>{ if(!ok) resolve(false); }, timeoutMs);
+    });
+  }
+
+  async function warmupTTS(){
+    const s = synth(); if(!s) return false;
+    await voicesReady();
+    try{
+      const u = new SpeechSynthesisUtterance(" ");
+      u.volume = 0.01; u.rate = 1; u.lang = "en-US";
+      s.speak(u);
+      return true;
+    }catch(e){ return false; }
+  }
+
+  if(ttsInitBtn){
+    ttsInitBtn.addEventListener('click', async ()=>{
+      const ok = await warmupTTS();
+      if(ok) ttsInitBtn.style.display = 'none';
+      else alert('이 브라우저에서는 TTS가 제한될 수 있어요. 크롬에서 열어 주세요.');
+    });
+  }
+
   function pickVoice(lang){ if(!voices.length) return null; const v=voices.find(v=>v.lang && v.lang.toLowerCase().startsWith(lang)); return v||voices[0]; }
 
   function enqueuePair(en,ko){ playQueue.push({text:en,lang:'en'},{text:ko,lang:'ko'}); }
-  function buildCategoryQueue(){ playQueue=[]; WORDS[currentCategory].forEach(([en,ko])=>enqueuePair(en,ko)); lastMode='all'; return playQueue.length; }
+  function buildCategoryQueue(){ playQueue=[]; order.forEach(i=>{ const [en,ko]=WORDS[currentCategory][i]; enqueuePair(en,ko); }); lastMode='all'; return playQueue.length; }
   function buildPageQueue(){ playQueue=[]; const start=page*10; const list=WORDS[currentCategory]; order.slice(start,start+10).forEach(i=>{ const [en,ko]=list[i]; enqueuePair(en,ko); }); lastMode='page'; return playQueue.length; }
 
-  function startQueue(){
+  async function startQueue(){
     if(playQueue.length===0){ isPlaying=false; updateControls(); return; }
     const s = synth(); if(!s){ isPlaying=false; playQueue=[]; updateControls(); return; }
+    await voicesReady();
     isPlaying = true;
     const {text,lang} = playQueue.shift();
     const u = new SpeechSynthesisUtterance(text); const v=pickVoice(lang); if(v) u.voice=v;
@@ -173,8 +219,8 @@
       const enEl=document.createElement('div'); enEl.className='en'; enEl.textContent=en;
       const koEl=document.createElement('div'); koEl.className='ko'; koEl.textContent=ko;
       const tts=document.createElement('div'); tts.className='tts';
-      const b1=document.createElement('button'); b1.textContent='▶ EN'; b1.addEventListener('click',()=>{ const s=synth(); if(s && (s.speaking||s.paused)) return; speak(en,'en'); });
-      const b2=document.createElement('button'); b2.textContent='▶ KO'; b2.addEventListener('click',()=>{ const s=synth(); if(s && (s.speaking||s.paused)) return; speak(ko,'ko'); });
+      const b1=document.createElement('button'); b1.textContent='▶ EN'; b1.addEventListener('click',async ()=>{ const s=synth(); if(s && (s.speaking||s.paused)) return; await voicesReady(); singleSpeak(en,'en'); });
+      const b2=document.createElement('button'); b2.textContent='▶ KO'; b2.addEventListener('click',async ()=>{ const s=synth(); if(s && (s.speaking||s.paused)) return; await voicesReady(); singleSpeak(ko,'ko'); });
       tts.appendChild(b1); tts.appendChild(b2);
       card.appendChild(enEl); card.appendChild(koEl); card.appendChild(tts);
       grid.appendChild(card);
@@ -182,7 +228,7 @@
     const totalPages=Math.ceil(order.length/10); pageInfo.textContent=`${page+1} / ${totalPages}`;
   }
 
-  function speak(text,lang){
+  function singleSpeak(text,lang){
     try{
       const s=synth(); if(!s) return;
       const u=new SpeechSynthesisUtterance(text); const v=pickVoice(lang); if(v) u.voice=v;
@@ -197,8 +243,8 @@
   shuffleBtn.addEventListener('click', ()=>{ for(let i=order.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [order[i],order[j]]=[order[j],order[i]]; } page=0; stopAll(); render(); });
   rateEl.addEventListener('input', ()=>{ rateVal.textContent=(parseFloat(rateEl.value)||1).toFixed(1)+'x'; });
 
-  playAllBtn.addEventListener('click', ()=>{ stopAll(); buildCategoryQueue(); isPaused=false; startQueue(); });
-  pauseBtn.addEventListener('click', ()=>{
+  playAllBtn.addEventListener('click', async ()=>{ stopAll(); buildCategoryQueue(); isPaused=false; await startQueue(); });
+  pauseBtn.addEventListener('click', async ()=>{
     const s=synth(); if(!s) return;
     if(!isPaused){ // 일시정지
       isPaused = true;
@@ -208,7 +254,7 @@
       if(playQueue.length===0){
         if(lastMode==='page') buildPageQueue(); else buildCategoryQueue();
       }
-      startQueue();
+      await startQueue();
     }
     updateControls();
   });
