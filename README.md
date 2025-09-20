@@ -3,6 +3,7 @@
 
 
 https://masyatt.github.io/kids-words-tts/
+https://masyatt.github.io/kids-words-tts/?v=6
 
 ## 모바일 주의
 - 모바일 브라우저의 자동재생 정책으로 첫 재생은 사용자 터치 후 동작합니다.
