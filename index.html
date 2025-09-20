@@ -4,8 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>유아용 영어 단어 · 10개씩 보기 + TTS</title>
-  <meta name="description" content="유아용 영어 단어를 10개씩 보고 듣는 웹앱. 카테고리별 50단어, TTS 재생/일시정지/정지 지원. 모바일 워밍업/우회 포함." />
-  <!-- v5: keep-playing across pagination when '전체 재생' -->
+  <meta name="description" content="유아용 영어 단어를 10개씩 보고 듣는 웹앱. 카테고리별 50단어, TTS 재생/일시정지/정지 지원. 페이지 이동 중에도 TTS 유지(v6)." />
   <style>
     :root{ --bg:#0b1020; --card:#121933; --text:#e8ecff; --sub:#a7b1d8; --accent:#7aa2ff; --muted:#2a335a; }
     *{box-sizing:border-box}
@@ -34,7 +33,6 @@
     @media (max-width:480px){ .grid{grid-template-columns:repeat(2,1fr)} }
     #err{display:none;margin-top:10px;background:#471a1a;border:1px solid #a33;padding:10px;border-radius:8px;color:#ffd9d9;white-space:pre-wrap;font-family:ui-monospace, SFMono-Regular, Menlo, monospace;font-size:12px}
     #inappWarn{display:none;margin-top:10px;padding:10px;border-radius:8px;background:#3a2a2a;color:#ffd9d9;}
-    #ttsInitBtn{background:#1e2a55}
     #ttsBroken{display:none;margin-top:10px;padding:12px;border-radius:10px;background:#33200d;color:#ffe0b3;border:1px solid #8a5;line-height:1.5}
     #ttsBroken a{color:#fff;text-decoration:underline}
   </style>
@@ -53,7 +51,6 @@
         <button id="playAllBtn" title="카테고리 전체(50개) 영어→한국어 순서 재생">▶ 전체 재생(카테고리)</button>
         <button id="pauseBtn" title="재생/일시정지">⏯ 재생/일시정지</button>
         <button id="stopBtn" title="정지">⏹ 정지</button>
-        <button id="ttsInitBtn" title="모바일에서 TTS 초기화">🔊 TTS 활성화</button>
       </div>
     </header>
 
@@ -88,10 +85,10 @@
     </div>
 
     <div id="err" aria-live="polite"></div>
-    <p class="hint">Tip: ▶ EN/KO 버튼으로 각 단어를 들을 수 있어요. ⏯로 일시정지/재개, ⏹로 정지합니다. 모바일에서는 먼저 <b>🔊 TTS 활성화</b>를 눌러 주세요.</p>
+    <p class="hint">Tip: ▶ EN/KO 버튼으로 각 단어를 들을 수 있어요. ⏯로 일시정지/재개, ⏹로 정지합니다. v6는 페이지를 넘겨도 전체 재생이 끊기지 않아요.</p>
   </div>
 
-  <!-- v5: WORDS를 전역(window.WORDS)으로 미리 선언하여 app.v5.js가 참조 -->
+  <!-- WORDS 데이터: 전역(window.WORDS) -->
   <script>
   window.WORDS = {
     "동물": [
@@ -187,6 +184,6 @@
   };
   </script>
 
-  <script src="app.v5.js?v=5" defer></script>
+  <script src="app.v6.js?v=6" defer></script>
 </body>
 </html>
