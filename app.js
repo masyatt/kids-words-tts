@@ -1,4 +1,4 @@
-// app.js v2 — 외부 JS, 모바일 TTS 워밍업 + 인앱 경고 + Pause/Resume 안정화
+// app.js v4 — TTS init must run synchronously on click (no await), better Android behavior.
 (function(){
   'use strict';
 
@@ -120,6 +120,7 @@
   const nextBtn=$('nextBtn'), prevBtn=$('prevBtn');
   const shuffleBtn=$('shuffleBtn'), playAllBtn=$('playAllBtn'), pauseBtn=$('pauseBtn'), stopBtn=$('stopBtn');
   const rateEl=$('rate'), rateVal=$('rateVal'), ttsInitBtn=$('ttsInitBtn');
+  const ttsBrokenBox=$('ttsBroken'), openChrome=$('openChrome');
 
   let currentCategory = Object.keys(WORDS)[0];
   let order = [...Array(WORDS[currentCategory].length).keys()];
@@ -130,8 +131,9 @@
   let isPlaying = false;
   let isPaused = false;
   let lastMode = 'all'; // 'all' | 'page'
+  let ttsBroken = false;
 
-  // ====== TTS 가드/워밍업 ======
+  // ====== TTS 가드 ======
   const hasTTS = ('speechSynthesis' in window) && (typeof window.SpeechSynthesisUtterance !== 'undefined');
   function synth(){ return hasTTS ? window.speechSynthesis : null; }
 
@@ -139,39 +141,30 @@
   function refreshVoices(){ try{ const s=synth(); voices = s && s.getVoices ? s.getVoices() : []; }catch(_){ voices=[]; } }
   refreshVoices(); if(hasTTS && synth()) synth().onvoiceschanged = refreshVoices;
 
-  function voicesReady(timeoutMs=2000){
-    return new Promise(resolve=>{
-      const s = synth(); if(!s) return resolve(false);
-      let ok = false;
-      function check(){
-        try{
-          const v = s.getVoices ? s.getVoices() : [];
-          if(v && v.length){ ok = true; resolve(true); }
-        }catch(e){}
-        if(!ok) setTimeout(check, 100);
-      }
-      check();
-      setTimeout(()=>{ if(!ok) resolve(false); }, timeoutMs);
-    });
-  }
-
-  async function warmupTTS(){
-    const s = synth(); if(!s) return false;
-    await voicesReady();
-    try{
-      const u = new SpeechSynthesisUtterance(" ");
-      u.volume = 0.01; u.rate = 1; u.lang = "en-US";
-      s.speak(u);
-      return true;
-    }catch(e){ return false; }
-  }
-
+  // ★ 핵심: 사용자 클릭 이벤트 안에서 즉시 speak() 호출하여 권한 확보
   if(ttsInitBtn){
-    ttsInitBtn.addEventListener('click', async ()=>{
-      const ok = await warmupTTS();
-      if(ok) ttsInitBtn.style.display = 'none';
-      else alert('이 브라우저에서는 TTS가 제한될 수 있어요. 크롬에서 열어 주세요.');
+    ttsInitBtn.addEventListener('click', function(){
+      const s = synth();
+      if(!s){ alert('이 브라우저는 TTS를 지원하지 않아요. Chrome으로 열어 주세요.'); return; }
+      try{
+        const u = new SpeechSynthesisUtterance(' ');
+        u.volume = 0.01; u.rate = 1; u.lang = 'en-US';
+        let started = false;
+        u.onstart = ()=>{ started = true; };
+        u.onend = ()=>{
+          if(started){ ttsInitBtn.style.display = 'none'; }
+          else { showTTSBroken(); }
+        };
+        s.speak(u); // ← 동기적으로 바로 실행
+      }catch(e){
+        showTTSBroken();
+      }
     });
+  }
+
+  function showTTSBroken(){
+    ttsBroken = true;
+    if(ttsBrokenBox) ttsBrokenBox.style.display = 'block';
   }
 
   function pickVoice(lang){ if(!voices.length) return null; const v=voices.find(v=>v.lang && v.lang.toLowerCase().startsWith(lang)); return v||voices[0]; }
@@ -180,20 +173,12 @@
   function buildCategoryQueue(){ playQueue=[]; order.forEach(i=>{ const [en,ko]=WORDS[currentCategory][i]; enqueuePair(en,ko); }); lastMode='all'; return playQueue.length; }
   function buildPageQueue(){ playQueue=[]; const start=page*10; const list=WORDS[currentCategory]; order.slice(start,start+10).forEach(i=>{ const [en,ko]=list[i]; enqueuePair(en,ko); }); lastMode='page'; return playQueue.length; }
 
-  async function startQueue(){
-    if(playQueue.length===0){ isPlaying=false; updateControls(); return; }
-    const s = synth(); if(!s){ isPlaying=false; playQueue=[]; updateControls(); return; }
-    await voicesReady();
-    isPlaying = true;
-    const {text,lang} = playQueue.shift();
-    const u = new SpeechSynthesisUtterance(text); const v=pickVoice(lang); if(v) u.voice=v;
-    u.lang=(lang==='en'?'en-US':'ko-KR'); u.rate=parseFloat(rateEl.value||'1');
-    u.onend = ()=> setTimeout(()=>{
-      if(!isPlaying || isPaused){ updateControls(); return; }
-      if(playQueue.length>0) startQueue(); else { isPlaying=false; updateControls(); }
-    },120);
-    s.speak(u);
-    updateControls();
+  function singleSpeak(text,lang){
+    try{
+      const s=synth(); if(!s){ showTTSBroken(); return; }
+      const u=new SpeechSynthesisUtterance(text); const v=pickVoice(lang); if(v) u.voice=v;
+      u.lang=(lang==='en'?'en-US':'ko-KR'); u.rate=parseFloat(rateEl.value||'1'); s.speak(u);
+    }catch(_){ showTTSBroken(); }
   }
 
   function stopAll(){ try{ const s=synth(); if(s) s.cancel(); }catch(_){}
@@ -205,7 +190,6 @@
     pauseBtn.textContent = (isPaused ? '▶ 재개' : (s.speaking ? '⏸ 일시정지' : '▶ 재생'));
   }
 
-  // ====== UI 렌더 ======
   function renderOptions(){
     categorySel.innerHTML = Object.keys(WORDS).map(k=>`<option value="${k}">${k}</option>`).join('');
     categorySel.value = currentCategory;
@@ -219,8 +203,8 @@
       const enEl=document.createElement('div'); enEl.className='en'; enEl.textContent=en;
       const koEl=document.createElement('div'); koEl.className='ko'; koEl.textContent=ko;
       const tts=document.createElement('div'); tts.className='tts';
-      const b1=document.createElement('button'); b1.textContent='▶ EN'; b1.addEventListener('click',async ()=>{ const s=synth(); if(s && (s.speaking||s.paused)) return; await voicesReady(); singleSpeak(en,'en'); });
-      const b2=document.createElement('button'); b2.textContent='▶ KO'; b2.addEventListener('click',async ()=>{ const s=synth(); if(s && (s.speaking||s.paused)) return; await voicesReady(); singleSpeak(ko,'ko'); });
+      const b1=document.createElement('button'); b1.textContent='▶ EN'; b1.addEventListener('click',()=>{ const s=synth(); if(s && (s.speaking||s.paused)) return; singleSpeak(en,'en'); });
+      const b2=document.createElement('button'); b2.textContent='▶ KO'; b2.addEventListener('click',()=>{ const s=synth(); if(s && (s.speaking||s.paused)) return; singleSpeak(ko,'ko'); });
       tts.appendChild(b1); tts.appendChild(b2);
       card.appendChild(enEl); card.appendChild(koEl); card.appendChild(tts);
       grid.appendChild(card);
@@ -228,12 +212,20 @@
     const totalPages=Math.ceil(order.length/10); pageInfo.textContent=`${page+1} / ${totalPages}`;
   }
 
-  function singleSpeak(text,lang){
-    try{
-      const s=synth(); if(!s) return;
-      const u=new SpeechSynthesisUtterance(text); const v=pickVoice(lang); if(v) u.voice=v;
-      u.lang=(lang==='en'?'en-US':'ko-KR'); u.rate=parseFloat(rateEl.value||'1'); s.speak(u);
-    }catch(_){}
+  function startQueue(){
+    if(ttsBroken) return;
+    if(playQueue.length===0){ isPlaying=false; updateControls(); return; }
+    const s = synth(); if(!s){ isPlaying=false; playQueue=[]; updateControls(); showTTSBroken(); return; }
+    isPlaying = true;
+    const {text,lang} = playQueue.shift();
+    const u = new SpeechSynthesisUtterance(text); const v=pickVoice(lang); if(v) u.voice=v;
+    u.lang=(lang==='en'?'en-US':'ko-KR'); u.rate=parseFloat(rateEl.value||'1');
+    s.speak(u);
+    u.onend = ()=> setTimeout(()=>{
+      if(!isPlaying || isPaused){ updateControls(); return; }
+      if(playQueue.length>0) startQueue(); else { isPlaying=false; updateControls(); }
+    },120);
+    updateControls();
   }
 
   // ====== 이벤트 ======
@@ -243,19 +235,10 @@
   shuffleBtn.addEventListener('click', ()=>{ for(let i=order.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [order[i],order[j]]=[order[j],order[i]]; } page=0; stopAll(); render(); });
   rateEl.addEventListener('input', ()=>{ rateVal.textContent=(parseFloat(rateEl.value)||1).toFixed(1)+'x'; });
 
-  playAllBtn.addEventListener('click', async ()=>{ stopAll(); buildCategoryQueue(); isPaused=false; await startQueue(); });
-  pauseBtn.addEventListener('click', async ()=>{
-    const s=synth(); if(!s) return;
-    if(!isPaused){ // 일시정지
-      isPaused = true;
-      try{ s.cancel(); }catch(_){}
-    }else{ // 재개
-      isPaused = false;
-      if(playQueue.length===0){
-        if(lastMode==='page') buildPageQueue(); else buildCategoryQueue();
-      }
-      await startQueue();
-    }
+  playAllBtn.addEventListener('click', ()=>{ stopAll(); buildCategoryQueue(); isPaused=false; startQueue(); });
+  pauseBtn.addEventListener('click', ()=>{
+    const s=synth(); if(!s){ showTTSBroken(); return; }
+    if(!isPaused){ isPaused = true; try{ s.cancel(); }catch(_){}} else { isPaused = false; if(playQueue.length===0){ if(lastMode==='page') buildPageQueue(); else buildCategoryQueue(); } startQueue(); }
     updateControls();
   });
   stopBtn.addEventListener('click', stopAll);
@@ -266,6 +249,15 @@
     if(!hasTTS){
       const warn = document.getElementById('ttsWarn');
       if(warn) warn.textContent = '· 이 브라우저는 음성합성이 제한될 수 있어요.';
+      showTTSBroken();
+    }
+    // 외부 크롬 열기(intent)
+    if(openChrome){
+      openChrome.addEventListener('click', (e)=>{
+        e.preventDefault();
+        const url = location.href;
+        location.href = `intent://${url.replace(/^https?:\/\//,'')}/#Intent;scheme=https;package=com.android.chrome;end`;
+      });
     }
   })();
 })();
