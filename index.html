@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>유아용 영어 단어 공부 · 10개씩 보기 + TTS</title>
+  <style>
+    :root{
+      --bg:#0b1020; --card:#121933; --text:#e8ecff; --sub:#a7b1d8; --accent:#7aa2ff; --muted:#2a335a;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Pretendard,Noto Sans KR,Apple SD Gothic Neo,sans-serif;background:linear-gradient(180deg,#0b1020 0%,#0f1730 100%);color:var(--text)}
+    .wrap{max-width:1100px;margin:0 auto;padding:20px}
+    header{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+    .brand{font-weight:800;letter-spacing:.2px}
+    .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    select,button,input[type="range"]{background:var(--card);color:var(--text);border:1px solid var(--muted);border-radius:12px;padding:10px 12px}
+    select:focus,button:focus{outline:2px solid var(--accent)}
+    button{cursor:pointer;transition:transform .02s ease, background .2s ease}
+    button:active{transform:translateY(1px)}
+    .grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-top:16px}
+    .card{background:var(--card);border:1px solid var(--muted);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:10px;min-height:120px}
+    .en{font-size:20px;font-weight:800}
+    .ko{font-size:16px;color:var(--sub)}
+    .tts{display:flex;gap:8px}
+    .footer{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:16px}
+    .pager{display:flex;gap:8px}
+    .hint{color:var(--sub);font-size:14px}
+    .badge{background:var(--muted);color:#d7defc;padding:4px 10px;border-radius:999px;font-size:12px}
+    .bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px}
+    .sr{position:absolute;left:-9999px}
+    @media (max-width:1024px){.grid{grid-template-columns:repeat(4,1fr)}}
+    @media (max-width:820px){.grid{grid-template-columns:repeat(2,1fr)} header{gap:8px}}
+    @media (max-width:420px){.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div style="font-size:18px;opacity:.8">유아용 영어 단어</div>
+        <div style="font-size:24px">10개씩 보기 · 듣기(TTS)</div>
+      </div>
+      <div class="controls">
+        <label class="badge">카테고리 50단어</label>
+        <select id="category"></select>
+        <button id="shuffleBtn" title="순서 섞기">🔀 섞기</button>
+        <button id="playAllBtn" title="카테고리 전체(50개) 영어→한국어 순서로 재생">▶ 전체 재생(카테고리)</button>
+        <button id="pauseBtn" title="재생/일시정지 토글">⏯ 재생/일시정지</button>
+        <button id="stopBtn" title="정지">⏹ 정지</button>
+      </div>
+    </header>
+
+    <div class="bar">
+      <span class="badge">읽기 속도</span>
+      <input id="rate" type="range" min="0.6" max="1.4" step="0.1" value="1" />
+      <span id="rateVal">1.0x</span>
+      <span class="hint">영어 ▶ 한국어 순서로 읽어요</span>
+    </div>
+
+    <div id="grid" class="grid" role="list" aria-live="polite"></div>
+
+    <div class="footer">
+      <div class="pager">
+        <button id="prevBtn">◀ 이전 10개</button>
+        <button id="nextBtn">다음 10개 ▶</button>
+      </div>
+      <div>
+        <span id="pageInfo" class="badge">- / -</span>
+      </div>
+    </div>
+
+    <p class="hint">Tip: 카드의 ▶ EN, ▶ KO 버튼을 눌러 각각 들어보세요. "전체 재생(카테고리)"는 선택한 카테고리의 50개를 영어→한국어 순서로 모두 읽습니다. ⏯로 일시정지/재개, ⏹로 정지할 수 있어요.</p>
+  </div>
+
+  <script>
+    // ====== 데이터: 카테고리별 50단어 ======
+    const WORDS = {
+      "동물": [
+        ["cat","고양이"],["dog","개"],["bird","새"],["fish","물고기"],["rabbit","토끼"],
+        ["horse","말"],["cow","소"],["pig","돼지"],["sheep","양"],["goat","염소"],
+        ["chicken","닭"],["duck","오리"],["goose","거위"],["turkey","칠면조"],["deer","사슴"],
+        ["bear","곰"],["lion","사자"],["tiger","호랑이"],["elephant","코끼리"],["giraffe","기린"],
+        ["monkey","원숭이"],["panda","판다"],["zebra","얼룩말"],["kangaroo","캥거루"],["koala","코알라"],
+        ["fox","여우"],["wolf","늑대"],["dolphin","돌고래"],["whale","고래"],["shark","상어"],
+        ["penguin","펭귄"],["seal","물개"],["turtle","거북이"],["frog","개구리"],["snake","뱀"],
+        ["crocodile","악어"],["hippo","하마"],["rhino","코뿔소"],["camel","낙타"],["donkey","당나귀"],
+        ["mouse","생쥐"],["rat","쥐"],["squirrel","다람쥐"],["bat","박쥐"],["owl","올빼미"],
+        ["eagle","독수리"],["bee","벌"],["ant","개미"],["butterfly","나비"],["spider","거미"]
+      ],
+      "날씨": [
+        ["sun","해"],["sunny","맑은"],["cloud","구름"],["cloudy","흐린"],["rain","비"],
+        ["rainy","비 오는"],["drizzle","이슬비"],["shower","소나기"],["thunder","천둥"],["lightning","번개"],
+        ["thunderstorm","뇌우"],["storm","폭풍"],["typhoon","태풍"],["hurricane","허리케인"],["wind","바람"],
+        ["windy","바람 부는"],["breeze","산들바람"],["gale","강풍"],["snow","눈"],["snowy","눈 오는"],
+        ["sleet","진눈깨비"],["hail","우박"],["mist","옅은 안개"],["fog","안개"],["foggy","안개 낀"],
+        ["rainbow","무지개"],["temperature","기온"],["hot","더운"],["warm","따뜻한"],["cool","서늘한"],
+        ["cold","추운"],["freeze","얼다"],["freezing","영하의"],["frost","서리"],["icy","얼음 낀"],
+        ["humid","습한"],["humidity","습도"],["dry","건조한"],["drought","가뭄"],["flood","홍수"],
+        ["overcast","회색 구름 낀"],["clear","쾌청한"],["sprinkle","가랑비"],["blizzard","눈보라"],["heatwave","폭염"],
+        ["snowfall","강설"],["raindrop","빗방울"],["dew","이슬"],["puddle","물웅덩이"],["forecast","일기예보"]
+      ],
+      
+      "숫자": Array.from({length:50}, (_,i)=>{
+        const enWords=["one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen","twenty","twenty-one","twenty-two","twenty-three","twenty-four","twenty-five","twenty-six","twenty-seven","twenty-eight","twenty-nine","thirty","thirty-one","thirty-two","thirty-three","thirty-four","thirty-five","thirty-six","thirty-seven","thirty-eight","thirty-nine","forty","forty-one","forty-two","forty-three","forty-four","forty-five","forty-six","forty-seven","forty-eight","forty-nine","fifty"]; 
+        const koWords=["하나","둘","셋","넷","다섯","여섯","일곱","여덟","아홉","열","열하나","열둘","열셋","열넷","열다섯","열여섯","열일곱","열여덟","열아홉","스무","스물하나","스물둘","스물셋","스물넷","스물다섯","스물여섯","스물일곱","스물여덟","스물아홉","서른","서른하나","서른둘","서른셋","서른넷","서른다섯","서른여섯","서른일곱","서른여덟","서른아홉","마흔","마흔하나","마흔둘","마흔셋","마흔넷","마흔다섯","마흔여섯","마흔일곱","마흔여덟","마흔아홉","쉰"]; 
+        return [enWords[i], koWords[i]];
+      }),
+      
+      "색": [
+        ["red","빨강"],["blue","파랑"],["yellow","노랑"],["green","초록"],["orange","주황"],
+        ["purple","보라"],["pink","분홍"],["brown","갈색"],["black","검정"],["white","흰색"],
+        ["gray","회색"],["light blue","하늘색"],["dark blue","진파랑"],["light green","연두색"],["dark green","진초록"],
+        ["light pink","연분홍"],["dark red","진빨강"],["gold","금색"],["silver","은색"],["bronze","청동색"],
+        ["beige","베이지색"],["ivory","아이보리색"],["navy","남색"],["mint","민트색"],["lavender","라벤더색"],
+        ["violet","바이올렛색"],["indigo","인디고색"],["magenta","자홍색"],["cyan","시안색"],["turquoise","터키석색"],
+        ["teal","틸색"],["lime","라임색"],["maroon","자주색"],["peach","복숭아색"],["coral","산호색"],
+        ["salmon","연어색"],["cream","크림색"],["khaki","카키색"],["tan","황갈색"],["mustard","겨자색"],
+        ["scarlet","주홍색"],["olive","올리브색"],["charcoal","숯색"],["rose","장미색"],["plum","자두색"],
+        ["sand","모래색"],["lilac","라일락색"],["burgundy","버건디색"],["apricot","살구색"],["pastel pink","파스텔분홍"]
+      ],
+      
+      "가족": [
+        ["mother","엄마"],["father","아빠"],["parents","부모님"],["baby","아기"],["child","아이"],
+        ["boy","소년"],["girl","소녀"],["brother","남자형제"],["sister","여자형제"],["big brother","형"],
+        ["little brother","남동생"],["big sister","누나"],["little sister","여동생"],["grandma","할머니"],["grandpa","할아버지"],
+        ["grandparents","조부모님"],["grandson","손자"],["granddaughter","손녀"],["grandchildren","손주들"],["cousin","사촌"],
+        ["aunt","이모"],["uncle","삼촌"],["nephew","조카(남)"],["niece","조카(여)"],["family","가족"],
+        ["relative","친척"],["twins","쌍둥이"],["newborn","갓난아기"],["teenager","십대"],["adult","어른"],
+        ["husband","남편"],["wife","아내"],["son","아들"],["daughter","딸"],["parents-in-law","시부모님"],
+        ["father-in-law","시아버지"],["mother-in-law","시어머니"],["brother-in-law","형부"],["sister-in-law","형수"],["stepfather","새아빠"],
+        ["stepmother","새엄마"],["stepson","의붓아들"],["stepdaughter","의붓딸"],["half-brother","이복형제(남)"],["half-sister","이복형제(여)"],
+        ["godfather","대부"],["godmother","대모"],["caregiver","보호자"],["household","식구"],["family pet","반려동물"],
+        ["babysitter","베이비시터"]
+      ],
+      
+      "감정": [
+        ["happy","행복한"],["sad","슬픈"],["angry","화난"],["scared","무서운"],["surprised","놀란"],
+        ["tired","피곤한"],["sleepy","졸린"],["excited","신이 난"],["bored","심심한"],["hungry","배고픈"],
+        ["thirsty","목마른"],["sick","아픈"],["hurt","다친"],["fine","괜찮은"],["good","좋은"],
+        ["bad","나쁜"],["cold","추운"],["hot","더운"],["shy","수줍은"],["brave","용감한"],
+        ["proud","자랑스러운"],["nervous","긴장한"],["worried","걱정되는"],["calm","차분한"],["curious","궁금한"],
+        ["confused","혼란스러운"],["jealous","질투하는"],["kind","친절한"],["polite","예의 바른"],["sorry","미안한"],
+        ["thankful","고마운"],["lonely","외로운"],["friendly","다정한"],["silly","엉뚱한"],["funny","웃기는"],
+        ["relaxed","편안한"],["upset","속상한"],["annoyed","짜증난"],["frustrated","답답한"],["shocked","충격받은"],
+        ["ashamed","부끄러운"],["eager","열성적인"],["hopeful","희망찬"],["disappointed","실망한"],["delighted","매우 기쁜"],
+        ["terrified","겁에 질린"],["thrilled","짜릿한"],["impatient","성급한"],["gentle","온화한"],["energetic","에너지 넘치는"]
+      ],
+      
+      "몸": [
+        ["head","머리"],["hair","머리카락"],["face","얼굴"],["eyes","눈"],["ears","귀"],
+        ["nose","코"],["mouth","입"],["teeth","이"],["tongue","혀"],["lips","입술"],
+        ["chin","턱"],["cheek","볼"],["neck","목"],["shoulder","어깨"],["arm","팔"],
+        ["elbow","팔꿈치"],["wrist","손목"],["hand","손"],["finger","손가락"],["thumb","엄지손가락"],
+        ["chest","가슴"],["back","등"],["waist","허리"],["hip","엉덩이"],["leg","다리"],
+        ["knee","무릎"],["ankle","발목"],["foot","발"],["toe","발가락"],["stomach","배"],
+        ["belly button","배꼽"],["heart","심장"],["lungs","폐"],["bone","뼈"],["skin","피부"],
+        ["brain","뇌"],["blood","피"],["eyebrow","눈썹"],["eyelash","속눈썹"],["forehead","이마"],
+        ["shoulder blade","어깨뼈"],["palm","손바닥"],["heel","발뒤꿈치"],["calf","종아리"],["thigh","허벅지"],
+        ["rib","갈비뼈"],["vein","정맥"],["muscle","근육"],["joints","관절"],["spine","척추"]
+      ],
+      
+      "일상동사": [
+        ["eat","먹다"],["drink","마시다"],["sleep","자다"],["wake up","일어나다"],["sit","앉다"],
+        ["stand","서다"],["walk","걷다"],["run","달리다"],["jump","점프하다"],["hop","깡충뛰다"],
+        ["skip","건너뛰다"],["clap","박수치다"],["sing","노래하다"],["dance","춤추다"],["read","읽다"],
+        ["write","쓰다"],["draw","그리다"],["color","색칠하다"],["play","놀다"],["play music","연주하다"],
+        ["swim","수영하다"],["ride","타다"],["fly","날다"],["drive","운전하다"],["open","열다"],
+        ["close","닫다"],["come","오다"],["go","가다"],["give","주다"],["take","받다"],
+        ["make","만들다"],["build","짓다"],["cut","자르다"],["cook","요리하다"],["wash","씻다"],
+        ["clean","청소하다"],["brush","닦다"],["look","보다"],["listen","듣다"],["hear","들리다"],
+        ["talk","말하다"],["tell","이야기하다"],["cry","울다"],["laugh","웃다"],["smile","미소짓다"],
+        ["think","생각하다"],["help","돕다"],["hold","잡다"],["push","밀다"],["pull","당기다"]
+      ]
+    };
+
+    // ====== 상태 ======
+    const categorySel = document.getElementById('category');
+    const grid = document.getElementById('grid');
+    const pageInfo = document.getElementById('pageInfo');
+    const nextBtn = document.getElementById('nextBtn');
+    const prevBtn = document.getElementById('prevBtn');
+    const shuffleBtn = document.getElementById('shuffleBtn');
+    const playAllBtn = document.getElementById('playAllBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const rateEl = document.getElementById('rate');
+    const rateVal = document.getElementById('rateVal');
+
+    let currentCategory = Object.keys(WORDS)[0];
+    let order = [...Array(WORDS[currentCategory].length).keys()]; // 동적 길이
+    let page = 0; // 0,1,2,3,4 for 10씩
+
+    // 재생 상태
+    let playQueue = [];
+    let isPlaying = false;
+    let currentUtter = null;
+
+    // ====== TTS 보이스 선택 (자동) ======
+    let voices = [];
+    function loadVoices(){
+      voices = window.speechSynthesis.getVoices();
+    }
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+
+    function getVoiceFor(lang){
+      if(!voices || voices.length===0) return null;
+      // lang 예: 'en' or 'ko'
+      const pri = voices.find(v => v.lang && v.lang.toLowerCase().startsWith(lang));
+      return pri || voices[0];
+    }
+
+    function speak(text, lang){
+      const u = new SpeechSynthesisUtterance(text);
+      const v = getVoiceFor(lang);
+      if(v) u.voice = v;
+      u.lang = (lang==="en"?"en-US":"ko-KR");
+      u.rate = parseFloat(rateEl.value || '1');
+      window.speechSynthesis.speak(u);
+    }
+
+    function stopSpeaking(){
+      window.speechSynthesis.cancel();
+      isPlaying = false;
+      playQueue = [];
+      currentUtter = null;
+      updateControls();
+    }
+
+    function updateControls(){
+      // 버튼 라벨 토글: speaking 중이면 ⏸, 일시정지면 ▶, 그 외 ▶
+      const synth = window.speechSynthesis;
+      if(synth.paused){
+        pauseBtn.textContent = '▶ 재생';
+      } else if(synth.speaking){
+        pauseBtn.textContent = '⏸ 일시정지';
+      } else {
+        pauseBtn.textContent = '▶ 재생';
+      }
+    }
+
+    function togglePause(){
+      const synth = window.speechSynthesis;
+      // 아무것도 없을 때 재생 시도: 큐가 남아 있으면 이어서, 없으면 무시
+      if(!synth.speaking && !synth.paused){
+        if(playQueue.length > 0){
+          startQueue();
+          updateControls();
+        }
+        return;
+      }
+      if(synth.paused){
+        synth.resume();
+      } else {
+        synth.pause();
+      }
+      updateControls();
+    }
+
+    function enqueue(text, lang){
+      playQueue.push({text, lang});
+    }
+
+    function buildCategoryQueue(){
+      playQueue = [];
+      const list = WORDS[currentCategory];
+      order.forEach(idx=>{
+        const [en,ko] = list[idx];
+        enqueue(en,'en');
+        enqueue(ko,'ko');
+      });
+      return playQueue.length;
+    }
+
+    function startQueue(){
+      if(playQueue.length===0){ isPlaying=false; updateControls(); return; }
+      isPlaying = true;
+      const {text, lang} = playQueue.shift();
+      const u = new SpeechSynthesisUtterance(text);
+      const v = getVoiceFor(lang);
+      if(v) u.voice = v;
+      u.lang = (lang==="en"?"en-US":"ko-KR");
+      u.rate = parseFloat(rateEl.value || '1');
+      u.onend = ()=> setTimeout(()=>{
+        if(!isPlaying) { updateControls(); return; }
+        if(playQueue.length>0){
+          startQueue();
+        }else{
+          isPlaying=false;
+          updateControls();
+        }
+      }, 120);
+      currentUtter = u;
+      window.speechSynthesis.speak(u);
+      updateControls();
+    }
+
+    // ====== 렌더 ======
+    function renderOptions(){
+      categorySel.innerHTML = Object.keys(WORDS).map(k=>`<option value="${k}">${k}</option>`).join('');
+      categorySel.value = currentCategory;
+    }
+
+    function render(){
+      const list = WORDS[currentCategory];
+      const start = page*10;
+      const slice = order.slice(start,start+10);
+      grid.innerHTML = slice.map(idx => {
+        const [en,ko] = list[idx];
+        return `<div class="card" role="listitem">
+          <div class="en">${en}</div>
+          <div class="ko">${ko}</div>
+          <div class="tts">
+            <button aria-label="영어 듣기" onclick="speak('${en.replace(/'/g,"\'")}', 'en')">▶ EN</button>
+            <button aria-label="한국어 듣기" onclick="speak('${ko.replace(/'/g,"\'")}', 'ko')">▶ KO</button>
+          </div>
+        </div>`;
+      }).join('');
+      const totalPages = Math.ceil(order.length/10);
+      pageInfo.textContent = `${page+1} / ${totalPages}`;
+    }
+
+    // ====== 동작 ======
+    categorySel.addEventListener('change', () => {
+      currentCategory = categorySel.value;
+      order = [...Array(WORDS[currentCategory].length).keys()];
+      page = 0;
+      stopSpeaking();
+      render();
+    });
+
+    nextBtn.addEventListener('click', ()=>{
+      const totalPages = Math.ceil(order.length/10);
+      page = (page+1) % totalPages; // 끝나면 처음으로
+      stopSpeaking();
+      render();
+    });
+
+    prevBtn.addEventListener('click', ()=>{
+      const totalPages = Math.ceil(order.length/10);
+      page = (page-1+totalPages) % totalPages;
+      stopSpeaking();
+      render();
+    });
+
+    shuffleBtn.addEventListener('click', ()=>{
+      // 피셔-예이츠 셔플
+      for(let i = order.length-1; i>0; i--){
+        const j = Math.floor(Math.random()*(i+1));
+        [order[i],order[j]] = [order[j],order[i]];
+      }
+      page = 0;
+      stopSpeaking();
+      render();
+    });
+
+    rateEl.addEventListener('input', ()=>{
+      rateVal.textContent = `${parseFloat(rateEl.value).toFixed(1)}x`;
+    });
+
+    playAllBtn.addEventListener('click', ()=>{
+      stopSpeaking();
+      buildCategoryQueue();
+      startQueue();
+    });
+
+    pauseBtn.addEventListener('click', ()=>{
+      togglePause();
+    });
+
+    stopBtn.addEventListener('click', ()=>{
+      stopSpeaking();
+    });
+
+    // 재생 상태 폴링로 UI 업데이트(브라우저별 일시정지 이벤트 편차 보완)
+    setInterval(updateControls, 300);
+
+    // ====== 테스트 (콘솔에서 확인) ======
+    function runTests(){
+      const keys = Object.keys(WORDS);
+      let allPass = true;
+      keys.forEach(k=>{
+        const len = WORDS[k].length;
+        console.assert(len === 50, `[TEST] 카테고리 '${k}'는 50단어여야 합니다. 현재: ${len}`);
+        if(len !== 50){ allPass = false; }
+        // 각 단어쌍 형식 검사
+        WORDS[k].forEach(([en,ko],i)=>{
+          console.assert(typeof en === 'string' && en.length>0, `[TEST] '${k}' ${i} EN 문자열이어야 합니다.`);
+          console.assert(typeof ko === 'string' && ko.length>0, `[TEST] '${k}' ${i} KO 문자열이어야 합니다.`);
+          console.assert(!en.includes("'"), `[TEST] '${k}' ${i} EN에 작은따옴표가 없어야 onclick에 안전합니다.`);
+        });
+      });
+
+      // order 검증
+      order = [...Array(WORDS[currentCategory].length).keys()];
+      const len = order.length;
+      const seen = new Set(order);
+      console.assert(seen.size === len, '[TEST] order 내 중복 없음');
+      console.assert(Math.min(...order) === 0 && Math.max(...order) === len-1, '[TEST] order 인덱스 범위 0..len-1');
+
+      // 페이지네이션 래핑 검증(10개씩, 50단어 기준 5페이지)
+      const totalPages = Math.ceil(len/10);
+      let p = 0; for(let i=0;i<totalPages;i++){ p = (p+1)%totalPages; }
+      console.assert(p === 0, '[TEST] 페이지 next 래핑 정상');
+
+      // 카테고리 전체 큐 빌드 검증 (50*2=100)
+      const qLen = buildCategoryQueue();
+      console.assert(qLen === 100, `[TEST] 전체 큐 길이 100이어야 합니다. 현재: ${qLen}`);
+
+      console.log(allPass ? '%c[TEST PASS] 기본 데이터/동작 테스트 통과' : '%c[TEST WARN] 50단어가 아닌 카테고리가 있습니다.', 'color:#7aa2ff');
+    }
+
+    // 초기화
+    renderOptions();
+    render();
+    runTests();
+  </script>
+</body>
+</html>
