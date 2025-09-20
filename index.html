@@ -4,12 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>유아용 영어 단어 · 10개씩 보기 + TTS</title>
-  <meta name="description" content="유아용 영어 단어를 10개씩 보고 듣는 웹앱. 카테고리별 50단어, TTS 재생/일시정지/정지 지원. 모바일(안드로이드) 워밍업 버튼 포함." />
-  <link rel="preload" href="app.js?v=2" as="script">
+  <meta name="description" content="유아용 영어 단어를 10개씩 보고 듣는 웹앱. 카테고리별 50단어, TTS 재생/일시정지/정지 지원. 모바일 워밍업+자가진단 포함." />
+  <link rel="preload" href="app.js?v=3" as="script">
   <style>
-    :root{
-      --bg:#0b1020; --card:#121933; --text:#e8ecff; --sub:#a7b1d8; --accent:#7aa2ff; --muted:#2a335a;
-    }
+    :root{ --bg:#0b1020; --card:#121933; --text:#e8ecff; --sub:#a7b1d8; --accent:#7aa2ff; --muted:#2a335a; }
     *{box-sizing:border-box}
     body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Pretendard,Noto Sans KR,Apple SD Gothic Neo,sans-serif;background:linear-gradient(180deg,#0b1020 0%,#0f1730 100%);color:var(--text)}
     .wrap{max-width:1100px;margin:0 auto;padding:20px}
@@ -34,10 +32,11 @@
     @media (max-width:1120px){ .grid{grid-template-columns:repeat(4,1fr)} }
     @media (max-width:820px){ .grid{grid-template-columns:repeat(3,1fr)} }
     @media (max-width:480px){ .grid{grid-template-columns:repeat(2,1fr)} }
-    /* 오류 메시지/안내 */
     #err{display:none;margin-top:10px;background:#471a1a;border:1px solid #a33;padding:10px;border-radius:8px;color:#ffd9d9;white-space:pre-wrap;font-family:ui-monospace, SFMono-Regular, Menlo, monospace;font-size:12px}
     #inappWarn{display:none;margin-top:10px;padding:10px;border-radius:8px;background:#3a2a2a;color:#ffd9d9;}
     #ttsInitBtn{background:#1e2a55}
+    #ttsBroken{display:none;margin-top:10px;padding:12px;border-radius:10px;background:#33200d;color:#ffe0b3;border:1px solid #8a5;line-height:1.5}
+    #ttsBroken a{color:#fff;text-decoration:underline}
   </style>
 </head>
 <body>
@@ -65,6 +64,12 @@
       </a>
     </div>
 
+    <div id="ttsBroken">
+      ⚠️ 기기에서 TTS가 차단된 것으로 감지됐어요. 아래 중 하나로 열어 주세요.<br>
+      1) <a id="openChrome" href="#" rel="noopener">Chrome으로 열기</a> &nbsp; 2) <a id="openNewTab" href="https://masyatt.github.io/kids-words-tts/" target="_blank" rel="noopener">새 탭에서 열기</a><br>
+      (앱 볼륨/무음모드도 확인해 주세요)
+    </div>
+
     <div class="bar">
       <span class="badge">읽기 속도</span>
       <input id="rate" type="range" min="0.6" max="1.4" step="0.1" value="1" />
@@ -86,6 +91,6 @@
     <p class="hint">Tip: ▶ EN/KO 버튼으로 각 단어를 들을 수 있어요. ⏯로 일시정지/재개, ⏹로 정지합니다. 모바일에서는 먼저 <b>🔊 TTS 활성화</b>를 눌러 주세요.</p>
   </div>
 
-  <script src="app.js?v=2" defer></script>
+  <script src="app.js?v=3" defer></script>
 </body>
 </html>
