@@ -16,13 +16,14 @@
     .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
     select,button,input[type="range"]{background:var(--card);color:var(--text);border:1px solid var(--muted);border-radius:14px;padding:12px 14px}
     select:focus,button:focus{outline:2px solid var(--accent)}
-    button{cursor:pointer;transition:transform .02s ease, background .2s ease;min-height:48px;min-width:44px;-webkit-tap-highlight-color:transparent}
+    button{cursor:pointer;transition:transform .02s ease, background .2s ease;min-height:40px;min-width:40px;-webkit-tap-highlight-color:transparent;padding:10px 12px}
     button:active{transform:translateY(1px)}
     .grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-top:16px}
-    .card{background:var(--card);border:1px solid var(--muted);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:10px;min-height:120px}
-    .en{font-size:20px;font-weight:800;line-height:1.25}
-    .ko{font-size:16px;color:var(--sub)}
-    .tts{display:flex;gap:8px}
+    .card{background:var(--card);border:1px solid var(--muted);border-radius:16px;padding:8px;display:flex;flex-direction:column;gap:8px;min-height:80px}
+    .en{font-size:18px;font-weight:800;line-height:1.2}
+    .ko{font-size:14px;color:var(--sub)}
+    .tts{display:flex;gap:6px}
+    .tts button{font-size:12px;min-height:36px;padding:6px 10px;border-radius:10px}
     .footer{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:16px}
     .pager{display:flex;gap:8px}
     .hint{color:var(--sub);font-size:14px}
@@ -31,7 +32,16 @@
     .sr{position:absolute;left:-9999px}
     @media (max-width:1120px){.grid{grid-template-columns:repeat(4,1fr)}}
     @media (max-width:820px){
-  .grid{grid-template-columns:repeat(2,1fr)}
+  .grid{grid-template-columns:repeat(3,1fr)}
+  header{gap:8px}
+  .controls{gap:8px}
+  .controls > select{flex:1 1 220px}
+  .controls > button{flex:0 0 auto}
+  select,button{font-size:15px}
+  .card{min-height:72px}
+  .en{font-size:17px}
+  .ko{font-size:14px}
+}
   header{gap:8px}
   .controls{gap:8px}
   .controls > *{flex:1 1 calc(50% - 8px)}
@@ -40,7 +50,20 @@
   .en{font-size:20px}
 }
     @media (max-width:480px){
-  .wrap{padding:12px}
+  .wrap{padding:10px}
+  .grid{grid-template-columns:repeat(2,1fr)}
+  .controls{gap:6px}
+  .controls > select{flex:1 1 200px}
+  .controls > button{flex:0 0 auto}
+  select,button{min-height:44px;font-size:15px;padding:10px 12px}
+  .pager button{width:auto}
+  .en{font-size:16px}
+  .ko{font-size:13px}
+}
+@media (max-width:360px){
+  .en{font-size:15px}
+  .ko{font-size:12.5px}
+}
   .grid{grid-template-columns:1fr}
   .controls{gap:8px}
   .controls > *{flex:1 1 100%}
