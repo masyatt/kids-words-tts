@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>유아용 영어 단어 · 10개씩 보기 + TTS</title>
-  <meta name="description" content="유아용 영어 단어를 10개씩 보고 듣는 웹앱. 카테고리별 50단어, TTS 재생/일시정지/정지 지원. 페이지 이동 중에도 TTS 유지(v6)." />
+  <title>유아용 영어 단어 · 발음 포함 · 10개씩 보기 + TTS</title>
+  <meta name="description" content="영어 단어 옆에 한국어식 발음(간이 표기)을 데이터에 직접 포함한 버전. 카테고리별 50단어, TTS 지원." />
   <style>
     :root{ --bg:#0b1020; --card:#121933; --text:#e8ecff; --sub:#a7b1d8; --accent:#7aa2ff; --muted:#2a335a; }
     *{box-sizing:border-box}
@@ -42,7 +42,7 @@
     <header>
       <div class="brand">
         <div style="font-size:18px;opacity:.8">유아용 영어 단어</div>
-        <div style="font-size:24px">10개씩 보기 · 듣기(TTS)</div>
+        <div style="font-size:24px">발음 포함 · 10개씩 보기 · 듣기(TTS)</div>
       </div>
       <div class="controls">
         <label class="badge">카테고리 50단어</label>
@@ -56,15 +56,13 @@
 
     <div id="inappWarn">
       인앱 브라우저에서는 음성재생이 제한될 수 있어요.
-      <a href="https://masyatt.github.io/kids-words-tts/" target="_blank" rel="noopener" style="color:#fff;text-decoration:underline;">
+      <a href="#" target="_blank" rel="noopener" style="color:#fff;text-decoration:underline;">
         👉 새 탭(크롬)에서 열기
       </a>
     </div>
 
     <div id="ttsBroken">
-      ⚠️ 기기에서 TTS가 차단된 것으로 감지됐어요. 아래 중 하나로 열어 주세요.<br>
-      1) <a id="openChrome" href="#" rel="noopener">Chrome으로 열기</a> &nbsp; 2) <a id="openNewTab" href="https://masyatt.github.io/kids-words-tts/" target="_blank" rel="noopener">새 탭에서 열기</a><br>
-      (앱 볼륨/무음모드도 확인해 주세요)
+      ⚠️ 기기에서 TTS가 차단된 것으로 감지됐어요. 새 탭에서 열어 주세요. (앱 볼륨/무음모드도 확인)
     </div>
 
     <div class="bar">
@@ -85,124 +83,1943 @@
     </div>
 
     <div id="err" aria-live="polite"></div>
-    <p class="hint">Tip: ▶ EN/KO 버튼으로 각 단어를 들을 수 있어요. ⏯로 일시정지/재개, ⏹로 정지합니다. v6는 페이지를 넘겨도 전체 재생이 끊기지 않아요.</p>
+    <p class="hint">Tip: ▶ EN/KO 버튼으로 각 단어를 들을 수 있어요. ⏯로 일시정지/재개, ⏹로 정지합니다.</p>
   </div>
 
-  <!-- WORDS 데이터: 전역(window.WORDS) -->
   <script>
   window.WORDS = {
-    "동물": [
-      ["cat","고양이"],["dog","개"],["bird","새"],["fish","물고기"],["rabbit","토끼"],
-      ["horse","말"],["cow","소"],["pig","돼지"],["sheep","양"],["goat","염소"],
-      ["chicken","닭"],["duck","오리"],["goose","거위"],["turkey","칠면조"],["deer","사슴"],
-      ["bear","곰"],["lion","사자"],["tiger","호랑이"],["elephant","코끼리"],["giraffe","기린"],
-      ["monkey","원숭이"],["panda","판다"],["zebra","얼룩말"],["kangaroo","캥거루"],["koala","코알라"],
-      ["fox","여우"],["wolf","늑대"],["dolphin","돌고래"],["whale","고래"],["shark","상어"],
-      ["penguin","펭귄"],["seal","물개"],["turtle","거북이"],["frog","개구리"],["snake","뱀"],
-      ["crocodile","악어"],["hippo","하마"],["rhino","코뿔소"],["camel","낙타"],["donkey","당나귀"],
-      ["mouse","생쥐"],["rat","쥐"],["squirrel","다람쥐"],["bat","박쥐"],["owl","올빼미"],
-      ["eagle","독수리"],["bee","벌"],["ant","개미"],["butterfly","나비"],["spider","거미"]
+  "동물": [
+    [
+      "cat 캣",
+      "고양이"
     ],
-    "날씨": [
-      ["sun","해"],["sunny","맑은"],["cloud","구름"],["cloudy","흐린"],["rain","비"],
-      ["rainy","비 오는"],["drizzle","이슬비"],["shower","소나기"],["thunder","천둥"],["lightning","번개"],
-      ["thunderstorm","뇌우"],["storm","폭풍"],["typhoon","태풍"],["hurricane","허리케인"],["wind","바람"],
-      ["windy","바람 부는"],["breeze","산들바람"],["gale","강풍"],["snow","눈"],["snowy","눈 오는"],
-      ["sleet","진눈깨비"],["hail","우박"],["mist","옅은 안개"],["fog","안개"],["foggy","안개 낀"],
-      ["rainbow","무지개"],["temperature","기온"],["hot","더운"],["warm","따뜻한"],["cool","서늘한"],
-      ["cold","추운"],["freeze","얼다"],["freezing","영하의"],["frost","서리"],["icy","얼음 낀"],
-      ["humid","습한"],["humidity","습도"],["dry","건조한"],["drought","가뭄"],["flood","홍수"],
-      ["overcast","회색 구름 낀"],["clear","쾌청한"],["sprinkle","가랑비"],["blizzard","눈보라"],["heatwave","폭염"],
-      ["snowfall","강설"],["raindrop","빗방울"],["dew","이슬"],["puddle","물웅덩이"],["forecast","일기예보"]
+    [
+      "dog 도그",
+      "개"
     ],
-    "숫자": (function(){ 
-      const en=["one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen","twenty","twenty-one","twenty-two","twenty-three","twenty-four","twenty-five","twenty-six","twenty-seven","twenty-eight","twenty-nine","thirty","thirty-one","thirty-two","thirty-three","thirty-four","thirty-five","thirty-six","thirty-seven","thirty-eight","thirty-nine","forty","forty-one","forty-two","forty-three","forty-four","forty-five","forty-six","forty-seven","forty-eight","forty-nine","fifty"];
-      const ko=["하나","둘","셋","넷","다섯","여섯","일곱","여덟","아홉","열","열하나","열둘","열셋","열넷","열다섯","열여섯","열일곱","열여덟","열아홉","스무","스물하나","스물둘","스물셋","스물넷","스물다섯","스물여섯","스물일곱","스물여덟","스물아홉","서른","서른하나","서른둘","서른셋","서른넷","서른다섯","서른여섯","서른일곱","서른여덟","서른아홉","마흔","마흔하나","마흔둘","마흔셋","마흔넷","마흔다섯","마흔여섯","마흔일곱","마흔여덟","마흔아홉","쉰"];
-      return en.map((e,i)=>[e,ko[i]]);
-    })(),
-    "색": [
-      ["red","빨강"],["blue","파랑"],["yellow","노랑"],["green","초록"],["orange","주황"],
-      ["purple","보라"],["pink","분홍"],["brown","갈색"],["black","검정"],["white","흰색"],
-      ["gray","회색"],["light blue","하늘색"],["dark blue","진파랑"],["light green","연두색"],["dark green","진초록"],
-      ["light pink","연분홍"],["dark red","진빨강"],["gold","금색"],["silver","은색"],["bronze","청동색"],
-      ["beige","베이지색"],["ivory","아이보리색"],["navy","남색"],["mint","민트색"],["lavender","라벤더색"],
-      ["violet","바이올렛색"],["indigo","인디고색"],["magenta","자홍색"],["cyan","시안색"],["turquoise","터키석색"],
-      ["teal","틸색"],["lime","라임색"],["maroon","자주색"],["peach","복숭아색"],["coral","산호색"],
-      ["salmon","연어색"],["cream","크림색"],["khaki","카키색"],["tan","황갈색"],["mustard","겨자색"],
-      ["scarlet","주홍색"],["olive","올리브색"],["charcoal","숯색"],["rose","장미색"],["plum","자두색"],
-      ["sand","모래색"],["lilac","라일락색"],["burgundy","버건디색"],["apricot","살구색"],["pastel pink","파스텔분홍"]
+    [
+      "bird 버드",
+      "새"
     ],
-    "가족": [
-      ["mother","엄마"],["father","아빠"],["parents","부모님"],["baby","아기"],["child","아이"],
-      ["boy","소년"],["girl","소녀"],["brother","남자형제"],["sister","여자형제"],["big brother","형"],
-      ["little brother","남동생"],["big sister","누나"],["little sister","여동생"],["grandma","할머니"],["grandpa","할아버지"],
-      ["grandparents","조부모님"],["grandson","손자"],["granddaughter","손녀"],["grandchildren","손주들"],["cousin","사촌"],
-      ["aunt","이모"],["uncle","삼촌"],["nephew","조카(남)"],["niece","조카(여)"],["family","가족"],
-      ["relative","친척"],["twins","쌍둥이"],["newborn","갓난아기"],["teenager","십대"],["adult","어른"],
-      ["husband","남편"],["wife","아내"],["son","아들"],["daughter","딸"],["parents-in-law","시부모님"],
-      ["father-in-law","시아버지"],["mother-in-law","시어머니"],["brother-in-law","형부"],["sister-in-law","형수"],["stepfather","새아빠"],
-      ["stepmother","새엄마"],["stepson","의붓아들"],["stepdaughter","의붓딸"],["half-brother","이복형제(남)"],["half-sister","이복형제(여)"],
-      ["godfather","대부"],["godmother","대모"],["caregiver","보호자"],["household","식구"],["family pet","반려동물"],
-      ["babysitter","베이비시터"]
+    [
+      "fish 피시",
+      "물고기"
     ],
-    "감정": [
-      ["happy","행복한"],["sad","슬픈"],["angry","화난"],["scared","무서운"],["surprised","놀란"],
-      ["tired","피곤한"],["sleepy","졸린"],["excited","신이 난"],["bored","심심한"],["hungry","배고픈"],
-      ["thirsty","목마른"],["sick","아픈"],["hurt","다친"],["fine","괜찮은"],["good","좋은"],
-      ["bad","나쁜"],["cold","추운"],["hot","더운"],["shy","수줍은"],["brave","용감한"],
-      ["proud","자랑스러운"],["nervous","긴장한"],["worried","걱정되는"],["calm","차분한"],["curious","궁금한"],
-      ["confused","혼란스러운"],["jealous","질투하는"],["kind","친절한"],["polite","예의 바른"],["sorry","미안한"],
-      ["thankful","고마운"],["lonely","외로운"],["friendly","다정한"],["silly","엉뚱한"],["funny","웃기는"],
-      ["relaxed","편안한"],["upset","속상한"],["annoyed","짜증난"],["frustrated","답답한"],["shocked","충격받은"],
-      ["ashamed","부끄러운"],["eager","열성적인"],["hopeful","희망찬"],["disappointed","실망한"],["delighted","매우 기쁜"],
-      ["terrified","겁에 질린"],["thrilled","짜릿한"],["impatient","성급한"],["gentle","온화한"],["energetic","에너지 넘치는"]
+    [
+      "rabbit 래빗",
+      "토끼"
     ],
-    "몸": [
-      ["head","머리"],["hair","머리카락"],["face","얼굴"],["eyes","눈"],["ears","귀"],
-      ["nose","코"],["mouth","입"],["teeth","이"],["tongue","혀"],["lips","입술"],
-      ["chin","턱"],["cheek","볼"],["neck","목"],["shoulder","어깨"],["arm","팔"],
-      ["elbow","팔꿈치"],["wrist","손목"],["hand","손"],["finger","손가락"],["thumb","엄지손가락"],
-      ["chest","가슴"],["back","등"],["waist","허리"],["hip","엉덩이"],["leg","다리"],
-      ["knee","무릎"],["ankle","발목"],["foot","발"],["toe","발가락"],["stomach","배"],
-      ["belly button","배꼽"],["heart","심장"],["lungs","폐"],["bone","뼈"],["skin","피부"],
-      ["brain","뇌"],["blood","피"],["eyebrow","눈썹"],["eyelash","속눈썹"],["forehead","이마"],
-      ["shoulder blade","어깨뼈"],["palm","손바닥"],["heel","발뒤꿈치"],["calf","종아리"],["thigh","허벅지"],
-      ["rib","갈비뼈"],["vein","정맥"],["muscle","근육"],["joints","관절"],["spine","척추"]
+    [
+      "horse 호스",
+      "말"
     ],
-    "일상동사": [
-      ["eat","먹다"],["drink","마시다"],["sleep","자다"],["wake up","일어나다"],["sit","앉다"],
-      ["stand","서다"],["walk","걷다"],["run","달리다"],["jump","점프하다"],["hop","깡충뛰다"],
-      ["skip","건너뛰다"],["clap","박수치다"],["sing","노래하다"],["dance","춤추다"],["read","읽다"],
-      ["write","쓰다"],["draw","그리다"],["color","색칠하다"],["play","놀다"],["play music","연주하다"],
-      ["swim","수영하다"],["ride","타다"],["fly","날다"],["drive","운전하다"],["open","열다"],
-      ["close","닫다"],["come","오다"],["go","가다"],["give","주다"],["take","받다"],
-      ["make","만들다"],["build","짓다"],["cut","자르다"],["cook","요리하다"],["wash","씻다"],
-      ["clean","청소하다"],["brush","닦다"],["look","보다"],["listen","듣다"],["hear","들리다"],
-      ["talk","말하다"],["tell","이야기하다"],["cry","울다"],["laugh","웃다"],["smile","미소짓다"],
-      ["think","생각하다"],["help","돕다"],["hold","잡다"],["push","밀다"],["pull","당기다"]
+    [
+      "cow 카우",
+      "소"
     ],
-    "숫자+요일+월": [
-      ["thousand","천"],["ten thousand","만"],["hundred thousand","십만"],["million","백만"],["ten million","천만"],["hundred million","억"],["billion","10억"],
-      ["Monday","월요일"],["Tuesday","화요일"],["Wednesday","수요일"],["Thursday","목요일"],["Friday","금요일"],["Saturday","토요일"],["Sunday","일요일"],
-      ["January","1월"],["February","2월"],["March","3월"],["April","4월"],["May","5월"],["June","6월"],["July","7월"],["August","8월"],["September","9월"],["October","10월"],["November","11월"],["December","12월"]
+    [
+      "pig 피그",
+      "돼지"
     ],
-
-    "과일": [
-      ["apple","사과"],["banana","바나나"],["orange","오렌지"],["grape","포도"],["strawberry","딸기"],
-      ["watermelon","수박"],["melon","멜론"],["peach","복숭아"],["plum","자두"],["cherry","체리"],
-      ["pear","배"],["pineapple","파인애플"],["mango","망고"],["kiwi","키위"],["lemon","레몬"],
-      ["lime","라임"],["grapefruit","자몽"],["blueberry","블루베리"],["raspberry","라즈베리"],["blackberry","블랙베리"],
-      ["cranberry","크랜베리"],["pomegranate","석류"],["apricot","살구"],["nectarine","천도복숭아"],["coconut","코코넛"],
-      ["papaya","파파야"],["guava","구아바"],["dragon fruit","용과"],["persimmon","감"],["fig","무화과"],
-      ["date","대추야자"],["lychee","리치"],["star fruit","스타프루트"],["passion fruit","패션프루트"],["durian","두리안"],
-      ["jackfruit","잭프루트"],["avocado","아보카도"],["tangerine","귤"],["clementine","클레멘타인"],["mandarin","만다린"],
-      ["mulberry","오디"],["gooseberry","구스베리"],["boysenberry","보이젠베리"],["red currant","레드커런트"],["black currant","블랙커런트"],
-      ["quince","모과"],["cantaloupe","칸탈루프"],["honeydew","허니듀"],["olive","올리브"],["tomato","토마토"]
+    [
+      "sheep 쉽",
+      "양"
+    ],
+    [
+      "goat 고트",
+      "염소"
+    ],
+    [
+      "chicken 치킨",
+      "닭"
+    ],
+    [
+      "duck 덕",
+      "오리"
+    ],
+    [
+      "goose 구스",
+      "거위"
+    ],
+    [
+      "turkey 터키",
+      "칠면조"
+    ],
+    [
+      "deer 디어",
+      "사슴"
+    ],
+    [
+      "bear 베어",
+      "곰"
+    ],
+    [
+      "lion 라이언",
+      "사자"
+    ],
+    [
+      "tiger 타이거",
+      "호랑이"
+    ],
+    [
+      "elephant 엘리펀트",
+      "코끼리"
+    ],
+    [
+      "giraffe 지래프",
+      "기린"
+    ],
+    [
+      "monkey 몽키",
+      "원숭이"
+    ],
+    [
+      "panda 팬더",
+      "판다"
+    ],
+    [
+      "zebra 지브라",
+      "얼룩말"
+    ],
+    [
+      "kangaroo 캥거루",
+      "캥거루"
+    ],
+    [
+      "koala 코알라",
+      "코알라"
+    ],
+    [
+      "fox 폭스",
+      "여우"
+    ],
+    [
+      "wolf 울프",
+      "늑대"
+    ],
+    [
+      "dolphin 돌핀",
+      "돌고래"
+    ],
+    [
+      "whale 웨일",
+      "고래"
+    ],
+    [
+      "shark 샤크",
+      "상어"
+    ],
+    [
+      "penguin 펭귄",
+      "펭귄"
+    ],
+    [
+      "seal 실(씰)",
+      "물개"
+    ],
+    [
+      "turtle 터틀",
+      "거북이"
+    ],
+    [
+      "frog 프로그",
+      "개구리"
+    ],
+    [
+      "snake 스네이크",
+      "뱀"
+    ],
+    [
+      "crocodile 크로커다일",
+      "악어"
+    ],
+    [
+      "hippo 히포",
+      "하마"
+    ],
+    [
+      "rhino 라이노",
+      "코뿔소"
+    ],
+    [
+      "camel 캐멀",
+      "낙타"
+    ],
+    [
+      "donkey 동키",
+      "당나귀"
+    ],
+    [
+      "mouse 마우스",
+      "생쥐"
+    ],
+    [
+      "rat 랫",
+      "쥐"
+    ],
+    [
+      "squirrel 스퀴럴",
+      "다람쥐"
+    ],
+    [
+      "bat 배트",
+      "박쥐"
+    ],
+    [
+      "owl 아울",
+      "올빼미"
+    ],
+    [
+      "eagle 이글",
+      "독수리"
+    ],
+    [
+      "bee 비",
+      "벌"
+    ],
+    [
+      "ant 앤트",
+      "개미"
+    ],
+    [
+      "butterfly 버터플라이",
+      "나비"
+    ],
+    [
+      "spider 스파이더",
+      "거미"
     ]
-
-  };
+  ],
+  "날씨": [
+    [
+      "sun 선",
+      "해"
+    ],
+    [
+      "sunny 써니",
+      "맑은"
+    ],
+    [
+      "cloud 클라우드",
+      "구름"
+    ],
+    [
+      "cloudy 클라우디",
+      "흐린"
+    ],
+    [
+      "rain 레인",
+      "비"
+    ],
+    [
+      "rainy 레이니",
+      "비 오는"
+    ],
+    [
+      "drizzle 드리즐",
+      "이슬비"
+    ],
+    [
+      "shower 샤워",
+      "소나기"
+    ],
+    [
+      "thunder 썬더",
+      "천둥"
+    ],
+    [
+      "lightning 라이트닝",
+      "번개"
+    ],
+    [
+      "thunderstorm 썬더스톰",
+      "뇌우"
+    ],
+    [
+      "storm 스톰",
+      "폭풍"
+    ],
+    [
+      "typhoon 타이푼",
+      "태풍"
+    ],
+    [
+      "hurricane 허리케인",
+      "허리케인"
+    ],
+    [
+      "wind 윈드",
+      "바람"
+    ],
+    [
+      "windy 윈디",
+      "바람 부는"
+    ],
+    [
+      "breeze 브리즈",
+      "산들바람"
+    ],
+    [
+      "gale 게일",
+      "강풍"
+    ],
+    [
+      "snow 스노",
+      "눈"
+    ],
+    [
+      "snowy 스노위",
+      "눈 오는"
+    ],
+    [
+      "sleet 슬리트",
+      "진눈깨비"
+    ],
+    [
+      "hail 헤일",
+      "우박"
+    ],
+    [
+      "mist 미스트",
+      "옅은 안개"
+    ],
+    [
+      "fog 포그",
+      "안개"
+    ],
+    [
+      "foggy 포기",
+      "안개 낀"
+    ],
+    [
+      "rainbow 레인보우",
+      "무지개"
+    ],
+    [
+      "temperature 템퍼러처",
+      "기온"
+    ],
+    [
+      "hot 핫",
+      "더운"
+    ],
+    [
+      "warm 웜",
+      "따뜻한"
+    ],
+    [
+      "cool 쿨",
+      "서늘한"
+    ],
+    [
+      "cold 콜드",
+      "추운"
+    ],
+    [
+      "freeze 프리즈",
+      "얼다"
+    ],
+    [
+      "freezing 프리징",
+      "영하의"
+    ],
+    [
+      "frost 프로스트",
+      "서리"
+    ],
+    [
+      "icy 아이시",
+      "얼음 낀"
+    ],
+    [
+      "humid 휴미드",
+      "습한"
+    ],
+    [
+      "humidity 휴미디티",
+      "습도"
+    ],
+    [
+      "dry 드라이",
+      "건조한"
+    ],
+    [
+      "drought 드라우트",
+      "가뭄"
+    ],
+    [
+      "flood 플러드",
+      "홍수"
+    ],
+    [
+      "overcast 오버캐스트",
+      "회색 구름 낀"
+    ],
+    [
+      "clear 클리어",
+      "쾌청한"
+    ],
+    [
+      "sprinkle 스프링클",
+      "가랑비"
+    ],
+    [
+      "blizzard 블리자드",
+      "눈보라"
+    ],
+    [
+      "heatwave 히트웨이브",
+      "폭염"
+    ],
+    [
+      "snowfall 스노폴",
+      "강설"
+    ],
+    [
+      "raindrop 레인드롭",
+      "빗방울"
+    ],
+    [
+      "dew 듀",
+      "이슬"
+    ],
+    [
+      "puddle 퍼들",
+      "물웅덩이"
+    ],
+    [
+      "forecast 포캐스트",
+      "일기예보"
+    ]
+  ],
+  "숫자": [
+    [
+      "one 원",
+      "하나"
+    ],
+    [
+      "two 투",
+      "둘"
+    ],
+    [
+      "three 쓰리",
+      "셋"
+    ],
+    [
+      "four 포",
+      "넷"
+    ],
+    [
+      "five 파이브",
+      "다섯"
+    ],
+    [
+      "six 식스",
+      "여섯"
+    ],
+    [
+      "seven 세븐",
+      "일곱"
+    ],
+    [
+      "eight 에잇",
+      "여덟"
+    ],
+    [
+      "nine 나인",
+      "아홉"
+    ],
+    [
+      "ten 텐",
+      "열"
+    ],
+    [
+      "eleven 일레븐",
+      "열하나"
+    ],
+    [
+      "twelve 트웰브",
+      "열둘"
+    ],
+    [
+      "thirteen 써틴",
+      "열셋"
+    ],
+    [
+      "fourteen 포틴",
+      "열넷"
+    ],
+    [
+      "fifteen 피프틴",
+      "열다섯"
+    ],
+    [
+      "sixteen 식스틴",
+      "열여섯"
+    ],
+    [
+      "seventeen 세븐틴",
+      "열일곱"
+    ],
+    [
+      "eighteen 에이틴",
+      "열여덟"
+    ],
+    [
+      "nineteen 나인틴",
+      "열아홉"
+    ],
+    [
+      "twenty 트웬티",
+      "스무"
+    ],
+    [
+      "twenty-one 트웬티·원",
+      "스물하나"
+    ],
+    [
+      "twenty-two 트웬티·투",
+      "스물둘"
+    ],
+    [
+      "twenty-three 트웬티·쓰리",
+      "스물셋"
+    ],
+    [
+      "twenty-four 트웬티·포",
+      "스물넷"
+    ],
+    [
+      "twenty-five 트웬티·파이브",
+      "스물다섯"
+    ],
+    [
+      "twenty-six 트웬티·식스",
+      "스물여섯"
+    ],
+    [
+      "twenty-seven 트웬티·세븐",
+      "스물일곱"
+    ],
+    [
+      "twenty-eight 트웬티·에잇",
+      "스물여덟"
+    ],
+    [
+      "twenty-nine 트웬티·나인",
+      "스물아홉"
+    ],
+    [
+      "thirty 써티",
+      "서른"
+    ],
+    [
+      "thirty-one 써티·원",
+      "서른하나"
+    ],
+    [
+      "thirty-two 써티·투",
+      "서른둘"
+    ],
+    [
+      "thirty-three 써티·쓰리",
+      "서른셋"
+    ],
+    [
+      "thirty-four 써티·포",
+      "서른넷"
+    ],
+    [
+      "thirty-five 써티·파이브",
+      "서른다섯"
+    ],
+    [
+      "thirty-six 써티·식스",
+      "서른여섯"
+    ],
+    [
+      "thirty-seven 써티·세븐",
+      "서른일곱"
+    ],
+    [
+      "thirty-eight 써티·에잇",
+      "서른여덟"
+    ],
+    [
+      "thirty-nine 써티·나인",
+      "서른아홉"
+    ],
+    [
+      "forty 포티",
+      "마흔"
+    ],
+    [
+      "forty-one 포티·원",
+      "마흔하나"
+    ],
+    [
+      "forty-two 포티·투",
+      "마흔둘"
+    ],
+    [
+      "forty-three 포티·쓰리",
+      "마흔셋"
+    ],
+    [
+      "forty-four 포티·포",
+      "마흔넷"
+    ],
+    [
+      "forty-five 포티·파이브",
+      "마흔다섯"
+    ],
+    [
+      "forty-six 포티·식스",
+      "마흔여섯"
+    ],
+    [
+      "forty-seven 포티·세븐",
+      "마흔일곱"
+    ],
+    [
+      "forty-eight 포티·에잇",
+      "마흔여덟"
+    ],
+    [
+      "forty-nine 포티·나인",
+      "마흔아홉"
+    ],
+    [
+      "fifty 피프티",
+      "쉰"
+    ]
+  ],
+  "색": [
+    [
+      "red 레드",
+      "빨강"
+    ],
+    [
+      "blue 블루",
+      "파랑"
+    ],
+    [
+      "yellow 옐로",
+      "노랑"
+    ],
+    [
+      "green 그린",
+      "초록"
+    ],
+    [
+      "orange 오렌지",
+      "주황"
+    ],
+    [
+      "purple 퍼플",
+      "보라"
+    ],
+    [
+      "pink 핑크",
+      "분홍"
+    ],
+    [
+      "brown 브라운",
+      "갈색"
+    ],
+    [
+      "black 블랙",
+      "검정"
+    ],
+    [
+      "white 화이트",
+      "흰색"
+    ],
+    [
+      "gray 그레이",
+      "회색"
+    ],
+    [
+      "light blue 라이트 블루",
+      "하늘색"
+    ],
+    [
+      "dark blue 다크 블루",
+      "진파랑"
+    ],
+    [
+      "light green 라이트 그린",
+      "연두색"
+    ],
+    [
+      "dark green 다크 그린",
+      "진초록"
+    ],
+    [
+      "light pink 라이트 핑크",
+      "연분홍"
+    ],
+    [
+      "dark red 다크 레드",
+      "진빨강"
+    ],
+    [
+      "gold 골드",
+      "금색"
+    ],
+    [
+      "silver 실버",
+      "은색"
+    ],
+    [
+      "bronze 브론즈",
+      "청동색"
+    ],
+    [
+      "beige 베이지",
+      "베이지색"
+    ],
+    [
+      "ivory 아이보리",
+      "아이보리색"
+    ],
+    [
+      "navy 네이비",
+      "남색"
+    ],
+    [
+      "mint 민트",
+      "민트색"
+    ],
+    [
+      "lavender 라벤더",
+      "라벤더색"
+    ],
+    [
+      "violet 바이올렛",
+      "바이올렛색"
+    ],
+    [
+      "indigo 인디고",
+      "인디고색"
+    ],
+    [
+      "magenta 마젠타",
+      "자홍색"
+    ],
+    [
+      "cyan 시안",
+      "시안색"
+    ],
+    [
+      "turquoise 터콰이즈",
+      "터키석색"
+    ],
+    [
+      "teal 틸",
+      "틸색"
+    ],
+    [
+      "lime 라임",
+      "라임색"
+    ],
+    [
+      "maroon 마룬",
+      "자주색"
+    ],
+    [
+      "peach 피치",
+      "복숭아색"
+    ],
+    [
+      "coral 코럴",
+      "산호색"
+    ],
+    [
+      "salmon 새먼",
+      "연어색"
+    ],
+    [
+      "cream 크림",
+      "크림색"
+    ],
+    [
+      "khaki 카키",
+      "카키색"
+    ],
+    [
+      "tan 탄",
+      "황갈색"
+    ],
+    [
+      "mustard 머스터드",
+      "겨자색"
+    ],
+    [
+      "scarlet 스칼렛",
+      "주홍색"
+    ],
+    [
+      "olive 올리브",
+      "올리브색"
+    ],
+    [
+      "charcoal 차콜",
+      "숯색"
+    ],
+    [
+      "rose 로즈",
+      "장미색"
+    ],
+    [
+      "plum 플럼",
+      "자두색"
+    ],
+    [
+      "sand 샌드",
+      "모래색"
+    ],
+    [
+      "lilac 라일락",
+      "라일락색"
+    ],
+    [
+      "burgundy 버건디",
+      "버건디색"
+    ],
+    [
+      "apricot 애프리콧",
+      "살구색"
+    ],
+    [
+      "pastel pink 파스텔 핑크",
+      "파스텔분홍"
+    ]
+  ],
+  "가족": [
+    [
+      "mother 마더",
+      "엄마"
+    ],
+    [
+      "father 파더",
+      "아빠"
+    ],
+    [
+      "parents 패런츠",
+      "부모님"
+    ],
+    [
+      "baby 베이비",
+      "아기"
+    ],
+    [
+      "child 차일드",
+      "아이"
+    ],
+    [
+      "boy 보이",
+      "소년"
+    ],
+    [
+      "girl 걸",
+      "소녀"
+    ],
+    [
+      "brother 브러더",
+      "남자형제"
+    ],
+    [
+      "sister 시스터",
+      "여자형제"
+    ],
+    [
+      "big brother 빅 브러더",
+      "형"
+    ],
+    [
+      "little brother 리틀 브러더",
+      "남동생"
+    ],
+    [
+      "big sister 빅 시스터",
+      "누나"
+    ],
+    [
+      "little sister 리틀 시스터",
+      "여동생"
+    ],
+    [
+      "grandma 그랜마",
+      "할머니"
+    ],
+    [
+      "grandpa 그랜파",
+      "할아버지"
+    ],
+    [
+      "grandparents 그랜페런츠",
+      "조부모님"
+    ],
+    [
+      "grandson 그랜슨",
+      "손자"
+    ],
+    [
+      "granddaughter 그랜도터",
+      "손녀"
+    ],
+    [
+      "grandchildren 그랜칠드런",
+      "손주들"
+    ],
+    [
+      "cousin 커즌",
+      "사촌"
+    ],
+    [
+      "aunt 안트",
+      "이모"
+    ],
+    [
+      "uncle 엉클",
+      "삼촌"
+    ],
+    [
+      "nephew 네퓨",
+      "조카(남)"
+    ],
+    [
+      "niece 니스",
+      "조카(여)"
+    ],
+    [
+      "family 패밀리",
+      "가족"
+    ],
+    [
+      "relative 렐러티브",
+      "친척"
+    ],
+    [
+      "twins 트윈즈",
+      "쌍둥이"
+    ],
+    [
+      "newborn 뉴본",
+      "갓난아기"
+    ],
+    [
+      "teenager 티네이저",
+      "십대"
+    ],
+    [
+      "adult 어덜트",
+      "어른"
+    ],
+    [
+      "husband 허즈번드",
+      "남편"
+    ],
+    [
+      "wife 와이프",
+      "아내"
+    ],
+    [
+      "son 선",
+      "아들"
+    ],
+    [
+      "daughter 도터",
+      "딸"
+    ],
+    [
+      "parents-in-law 패런츠 인 로",
+      "시부모님"
+    ],
+    [
+      "father-in-law 파더 인 로",
+      "시아버지"
+    ],
+    [
+      "mother-in-law 마더 인 로",
+      "시어머니"
+    ],
+    [
+      "brother-in-law 브러더 인 로",
+      "형부"
+    ],
+    [
+      "sister-in-law 시스터 인 로",
+      "형수"
+    ],
+    [
+      "stepfather 스텝파더",
+      "새아빠"
+    ],
+    [
+      "stepmother 스텝마더",
+      "새엄마"
+    ],
+    [
+      "stepson 스텝선",
+      "의붓아들"
+    ],
+    [
+      "stepdaughter 스텝도터",
+      "의붓딸"
+    ],
+    [
+      "half-brother 해프 브러더",
+      "이복형제(남)"
+    ],
+    [
+      "half-sister 해프 시스터",
+      "이복형제(여)"
+    ],
+    [
+      "godfather 갓파더",
+      "대부"
+    ],
+    [
+      "godmother 갓마더",
+      "대모"
+    ],
+    [
+      "caregiver 케어기버",
+      "보호자"
+    ],
+    [
+      "household 하우스홀드",
+      "식구"
+    ],
+    [
+      "family pet 패밀리 펫",
+      "반려동물"
+    ],
+    [
+      "babysitter 베이비시터",
+      "베이비시터"
+    ]
+  ],
+  "감정": [
+    [
+      "happy 해피",
+      "행복한"
+    ],
+    [
+      "sad 새드",
+      "슬픈"
+    ],
+    [
+      "angry 앵그리",
+      "화난"
+    ],
+    [
+      "scared 스케어드",
+      "무서운"
+    ],
+    [
+      "surprised 서프라이즈드",
+      "놀란"
+    ],
+    [
+      "tired 타이어드",
+      "피곤한"
+    ],
+    [
+      "sleepy 슬리피",
+      "졸린"
+    ],
+    [
+      "excited 익사이티드",
+      "신이 난"
+    ],
+    [
+      "bored 보어드",
+      "심심한"
+    ],
+    [
+      "hungry 헝그리",
+      "배고픈"
+    ],
+    [
+      "thirsty 서스티",
+      "목마른"
+    ],
+    [
+      "sick 식",
+      "아픈"
+    ],
+    [
+      "hurt 헐트",
+      "다친"
+    ],
+    [
+      "fine 파인",
+      "괜찮은"
+    ],
+    [
+      "good 굿",
+      "좋은"
+    ],
+    [
+      "bad 배드",
+      "나쁜"
+    ],
+    [
+      "cold 콜드",
+      "추운"
+    ],
+    [
+      "hot 핫",
+      "더운"
+    ],
+    [
+      "shy 샤이",
+      "수줍은"
+    ],
+    [
+      "brave 브레이브",
+      "용감한"
+    ],
+    [
+      "proud 프라우드",
+      "자랑스러운"
+    ],
+    [
+      "nervous 너버스",
+      "긴장한"
+    ],
+    [
+      "worried 워리드",
+      "걱정되는"
+    ],
+    [
+      "calm 캄",
+      "차분한"
+    ],
+    [
+      "curious 큐리어스",
+      "궁금한"
+    ],
+    [
+      "confused 컨퓨즈드",
+      "혼란스러운"
+    ],
+    [
+      "jealous 젤러스",
+      "질투하는"
+    ],
+    [
+      "kind 카인드",
+      "친절한"
+    ],
+    [
+      "polite 폴라이트",
+      "예의 바른"
+    ],
+    [
+      "sorry 쏘리",
+      "미안한"
+    ],
+    [
+      "thankful 땡크풀",
+      "고마운"
+    ],
+    [
+      "lonely 론리",
+      "외로운"
+    ],
+    [
+      "friendly 프렌들리",
+      "다정한"
+    ],
+    [
+      "silly 실리",
+      "엉뚱한"
+    ],
+    [
+      "funny 퍼니",
+      "웃기는"
+    ],
+    [
+      "relaxed 릴랙스드",
+      "편안한"
+    ],
+    [
+      "upset 업셋",
+      "속상한"
+    ],
+    [
+      "annoyed 어노이드",
+      "짜증난"
+    ],
+    [
+      "frustrated 프러스트레이티드",
+      "답답한"
+    ],
+    [
+      "shocked 샥트",
+      "충격받은"
+    ],
+    [
+      "ashamed 어쉐임드",
+      "부끄러운"
+    ],
+    [
+      "eager 이가",
+      "열성적인"
+    ],
+    [
+      "hopeful 호프풀",
+      "희망찬"
+    ],
+    [
+      "disappointed 디서포인티드",
+      "실망한"
+    ],
+    [
+      "delighted 딜라이트드",
+      "매우 기쁜"
+    ],
+    [
+      "terrified 테리파이드",
+      "겁에 질린"
+    ],
+    [
+      "thrilled 스릴드",
+      "짜릿한"
+    ],
+    [
+      "impatient 임페이션트",
+      "성급한"
+    ],
+    [
+      "gentle 젠틀",
+      "온화한"
+    ],
+    [
+      "energetic 에너제틱",
+      "에너지 넘치는"
+    ]
+  ],
+  "몸": [
+    [
+      "head 헤드",
+      "머리"
+    ],
+    [
+      "hair 헤어",
+      "머리카락"
+    ],
+    [
+      "face 페이스",
+      "얼굴"
+    ],
+    [
+      "eyes 아이즈",
+      "눈"
+    ],
+    [
+      "ears 이어즈",
+      "귀"
+    ],
+    [
+      "nose 노즈",
+      "코"
+    ],
+    [
+      "mouth 마우스",
+      "입"
+    ],
+    [
+      "teeth 티스",
+      "이"
+    ],
+    [
+      "tongue 텅",
+      "혀"
+    ],
+    [
+      "lips 립스",
+      "입술"
+    ],
+    [
+      "chin 친",
+      "턱"
+    ],
+    [
+      "cheek 칙",
+      "볼"
+    ],
+    [
+      "neck 넥",
+      "목"
+    ],
+    [
+      "shoulder 숄더",
+      "어깨"
+    ],
+    [
+      "arm 암",
+      "팔"
+    ],
+    [
+      "elbow 엘보",
+      "팔꿈치"
+    ],
+    [
+      "wrist 리스트",
+      "손목"
+    ],
+    [
+      "hand 핸드",
+      "손"
+    ],
+    [
+      "finger 핑거",
+      "손가락"
+    ],
+    [
+      "thumb 썸",
+      "엄지손가락"
+    ],
+    [
+      "chest 체스트",
+      "가슴"
+    ],
+    [
+      "back 백",
+      "등"
+    ],
+    [
+      "waist 웨이스트",
+      "허리"
+    ],
+    [
+      "hip 힙",
+      "엉덩이"
+    ],
+    [
+      "leg 레그",
+      "다리"
+    ],
+    [
+      "knee 니",
+      "무릎"
+    ],
+    [
+      "ankle 앵클",
+      "발목"
+    ],
+    [
+      "foot 풋",
+      "발"
+    ],
+    [
+      "toe 토",
+      "발가락"
+    ],
+    [
+      "stomach 스터먹",
+      "배"
+    ],
+    [
+      "belly button 벨리 버튼",
+      "배꼽"
+    ],
+    [
+      "heart 하트",
+      "심장"
+    ],
+    [
+      "lungs 렁즈",
+      "폐"
+    ],
+    [
+      "bone 본",
+      "뼈"
+    ],
+    [
+      "skin 스킨",
+      "피부"
+    ],
+    [
+      "brain 브레인",
+      "뇌"
+    ],
+    [
+      "blood 블러드",
+      "피"
+    ],
+    [
+      "eyebrow 아이브로우",
+      "눈썹"
+    ],
+    [
+      "eyelash 아이라시",
+      "속눈썹"
+    ],
+    [
+      "forehead 포헤드",
+      "이마"
+    ],
+    [
+      "shoulder blade 숄더 블레이드",
+      "어깨뼈"
+    ],
+    [
+      "palm 팜",
+      "손바닥"
+    ],
+    [
+      "heel 힐",
+      "발뒤꿈치"
+    ],
+    [
+      "calf 카프",
+      "종아리"
+    ],
+    [
+      "thigh 싸이",
+      "허벅지"
+    ],
+    [
+      "rib 립",
+      "갈비뼈"
+    ],
+    [
+      "vein 베인",
+      "정맥"
+    ],
+    [
+      "muscle 머슬",
+      "근육"
+    ],
+    [
+      "joints 조인츠",
+      "관절"
+    ],
+    [
+      "spine 스파인",
+      "척추"
+    ]
+  ],
+  "일상동사": [
+    [
+      "eat 잇",
+      "먹다"
+    ],
+    [
+      "drink 드링크",
+      "마시다"
+    ],
+    [
+      "sleep 슬립",
+      "자다"
+    ],
+    [
+      "wake up 웨이크 업",
+      "일어나다"
+    ],
+    [
+      "sit 싯",
+      "앉다"
+    ],
+    [
+      "stand 스탠드",
+      "서다"
+    ],
+    [
+      "walk 워크",
+      "걷다"
+    ],
+    [
+      "run 런",
+      "달리다"
+    ],
+    [
+      "jump 점프",
+      "점프하다"
+    ],
+    [
+      "hop 합",
+      "깡충뛰다"
+    ],
+    [
+      "skip 스킵",
+      "건너뛰다"
+    ],
+    [
+      "clap 클랩",
+      "박수치다"
+    ],
+    [
+      "sing 싱",
+      "노래하다"
+    ],
+    [
+      "dance 댄스",
+      "춤추다"
+    ],
+    [
+      "read 리드",
+      "읽다"
+    ],
+    [
+      "write 라이트",
+      "쓰다"
+    ],
+    [
+      "draw 드로우",
+      "그리다"
+    ],
+    [
+      "color 컬러",
+      "색칠하다"
+    ],
+    [
+      "play 플레이",
+      "놀다"
+    ],
+    [
+      "play music 플레이 뮤직",
+      "연주하다"
+    ],
+    [
+      "swim 스윔",
+      "수영하다"
+    ],
+    [
+      "ride 라이드",
+      "타다"
+    ],
+    [
+      "fly 플라이",
+      "날다"
+    ],
+    [
+      "drive 드라이브",
+      "운전하다"
+    ],
+    [
+      "open 오픈",
+      "열다"
+    ],
+    [
+      "close 클로즈",
+      "닫다"
+    ],
+    [
+      "come 컴",
+      "오다"
+    ],
+    [
+      "go 고",
+      "가다"
+    ],
+    [
+      "give 기브",
+      "주다"
+    ],
+    [
+      "take 테이크",
+      "받다"
+    ],
+    [
+      "make 메이크",
+      "만들다"
+    ],
+    [
+      "build 빌드",
+      "짓다"
+    ],
+    [
+      "cut 컷",
+      "자르다"
+    ],
+    [
+      "cook 쿡",
+      "요리하다"
+    ],
+    [
+      "wash 워시",
+      "씻다"
+    ],
+    [
+      "clean 클린",
+      "청소하다"
+    ],
+    [
+      "brush 브러시",
+      "닦다"
+    ],
+    [
+      "look 룩",
+      "보다"
+    ],
+    [
+      "listen 리스은(리스튼)",
+      "듣다"
+    ],
+    [
+      "hear 히어",
+      "들리다"
+    ],
+    [
+      "talk 톡",
+      "말하다"
+    ],
+    [
+      "tell 텔",
+      "이야기하다"
+    ],
+    [
+      "cry 크라이",
+      "울다"
+    ],
+    [
+      "laugh 래프",
+      "웃다"
+    ],
+    [
+      "smile 스마일",
+      "미소짓다"
+    ],
+    [
+      "think 띵크",
+      "생각하다"
+    ],
+    [
+      "help 헬프",
+      "돕다"
+    ],
+    [
+      "hold 홀드",
+      "잡다"
+    ],
+    [
+      "push 푸시",
+      "밀다"
+    ],
+    [
+      "pull 풀",
+      "당기다"
+    ]
+  ],
+  "숫자+요일+월": [
+    [
+      "thousand 사우전드",
+      "천"
+    ],
+    [
+      "ten thousand 텐 사우전드",
+      "만"
+    ],
+    [
+      "hundred thousand 헌드레드 사우전드",
+      "십만"
+    ],
+    [
+      "million 밀리언",
+      "백만"
+    ],
+    [
+      "ten million 텐 밀리언",
+      "천만"
+    ],
+    [
+      "hundred million 헌드레드 밀리언",
+      "억"
+    ],
+    [
+      "billion 빌리언",
+      "10억"
+    ],
+    [
+      "Monday 므오느드아이",
+      "월요일"
+    ],
+    [
+      "Tuesday 트우에스드아이",
+      "화요일"
+    ],
+    [
+      "Wednesday 우에드느에스드아이",
+      "수요일"
+    ],
+    [
+      "Thursday 쓰우르스드아이",
+      "목요일"
+    ],
+    [
+      "Friday 프르이드아이",
+      "금요일"
+    ],
+    [
+      "Saturday 스아트우르드아이",
+      "토요일"
+    ],
+    [
+      "Sunday 스우느드아이",
+      "일요일"
+    ],
+    [
+      "January 지아느우아르이",
+      "1월"
+    ],
+    [
+      "February 프에브르우아르이",
+      "2월"
+    ],
+    [
+      "March 므아르치",
+      "3월"
+    ],
+    [
+      "April 아프르이르",
+      "4월"
+    ],
+    [
+      "May 므아이",
+      "5월"
+    ],
+    [
+      "June 지우느에",
+      "6월"
+    ],
+    [
+      "July 지우르이",
+      "7월"
+    ],
+    [
+      "August 아우그우스트",
+      "8월"
+    ],
+    [
+      "September 스에프트에므브에르",
+      "9월"
+    ],
+    [
+      "October 오크트오브에르",
+      "10월"
+    ],
+    [
+      "November 느오브에므브에르",
+      "11월"
+    ],
+    [
+      "December 드에크에므브에르",
+      "12월"
+    ]
+  ],
+  "과일": [
+    [
+      "apple 아프프르에",
+      "사과"
+    ],
+    [
+      "banana 브아느아느아",
+      "바나나"
+    ],
+    [
+      "orange 오렌지",
+      "오렌지"
+    ],
+    [
+      "grape 그르아프에",
+      "포도"
+    ],
+    [
+      "strawberry 스트르아우브에르르이",
+      "딸기"
+    ],
+    [
+      "watermelon 우아트에르므에르오느",
+      "수박"
+    ],
+    [
+      "melon 므에르오느",
+      "멜론"
+    ],
+    [
+      "peach 피치",
+      "복숭아"
+    ],
+    [
+      "plum 플럼",
+      "자두"
+    ],
+    [
+      "cherry 치에르르이",
+      "체리"
+    ],
+    [
+      "pear 프에아르",
+      "배"
+    ],
+    [
+      "pineapple 프이느에아프프르에",
+      "파인애플"
+    ],
+    [
+      "mango 므아응오",
+      "망고"
+    ],
+    [
+      "kiwi 크이우이",
+      "키위"
+    ],
+    [
+      "lemon 르에므오느",
+      "레몬"
+    ],
+    [
+      "lime 라임",
+      "라임"
+    ],
+    [
+      "grapefruit 그르아프에프르우이트",
+      "자몽"
+    ],
+    [
+      "blueberry 브르우에브에르르이",
+      "블루베리"
+    ],
+    [
+      "raspberry 르아스프브에르르이",
+      "라즈베리"
+    ],
+    [
+      "blackberry 브르아크브에르르이",
+      "블랙베리"
+    ],
+    [
+      "cranberry 크르아느브에르르이",
+      "크랜베리"
+    ],
+    [
+      "pomegranate 프오므에그르아느아트에",
+      "석류"
+    ],
+    [
+      "apricot 애프리콧",
+      "살구"
+    ],
+    [
+      "nectarine 느에크트아르이느에",
+      "천도복숭아"
+    ],
+    [
+      "coconut 크오크오느우트",
+      "코코넛"
+    ],
+    [
+      "papaya 프아프아이아",
+      "파파야"
+    ],
+    [
+      "guava 그우아브아",
+      "구아바"
+    ],
+    [
+      "dragon fruit 드르아그오느 프르우이트",
+      "용과"
+    ],
+    [
+      "persimmon 프에르스이므므오느",
+      "감"
+    ],
+    [
+      "fig 프이그",
+      "무화과"
+    ],
+    [
+      "date 드아트에",
+      "대추야자"
+    ],
+    [
+      "lychee 르이치에에",
+      "리치"
+    ],
+    [
+      "star fruit 스트아르 프르우이트",
+      "스타프루트"
+    ],
+    [
+      "passion fruit 프아스스이오느 프르우이트",
+      "패션프루트"
+    ],
+    [
+      "durian 드우르이아느",
+      "두리안"
+    ],
+    [
+      "jackfruit 지아크프르우이트",
+      "잭프루트"
+    ],
+    [
+      "avocado 아브오크아드오",
+      "아보카도"
+    ],
+    [
+      "tangerine 트아응에르이느에",
+      "귤"
+    ],
+    [
+      "clementine 크르에므에느트이느에",
+      "클레멘타인"
+    ],
+    [
+      "mandarin 므아느드아르이느",
+      "만다린"
+    ],
+    [
+      "mulberry 므우르브에르르이",
+      "오디"
+    ],
+    [
+      "gooseberry 그오오스에브에르르이",
+      "구스베리"
+    ],
+    [
+      "boysenberry 브오이스에느브에르르이",
+      "보이젠베리"
+    ],
+    [
+      "red currant 레드 크우르르아느트",
+      "레드커런트"
+    ],
+    [
+      "black currant 블랙 크우르르아느트",
+      "블랙커런트"
+    ],
+    [
+      "quince 쿠이느크에",
+      "모과"
+    ],
+    [
+      "cantaloupe 크아느트아르오우프에",
+      "칸탈루프"
+    ],
+    [
+      "honeydew ㅎ오느에이드에우",
+      "허니듀"
+    ],
+    [
+      "olive 올리브",
+      "올리브"
+    ],
+    [
+      "tomato 트오므아트오",
+      "토마토"
+    ]
+  ]
+};
   </script>
 
+  <!-- 기존 앱 로직 넣는 곳 -->
   <script src="app.v6.js?v=6" defer></script>
 </body>
 </html>
