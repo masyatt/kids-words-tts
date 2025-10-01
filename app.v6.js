@@ -18,7 +18,8 @@
   let list = WORDS[cur] || [];
   let page = 0, isPlaying=false, abortAll=false;
 
-  category.innerHTML = Object.keys(WORDS).map(c=>`<option>${c}</option>`).join('');
+  // Fill categories
+  category.innerHTML = Object.keys(WORDS).map(c=>`<option value="${c}">${c}</option>`).join('');
   if(cur) category.value = cur;
 
   function render(){
@@ -30,8 +31,8 @@
         <div class="en">${en}</div>
         <div class="ko">${ko}</div>
         <div class="tts">
-          <button class="enb" data-en="${en}">▶ EN</button>
-          <button class="kob" data-ko="${ko}">▶ KO</button>
+          <button class="enb" data-en="${en}" aria-label="${en} 영어로 듣기">▶ EN</button>
+          <button class="kob" data-ko="${ko}" aria-label="${ko} 한국어로 듣기">▶ KO</button>
         </div>
       </div>
     `).join('');
@@ -74,6 +75,8 @@
   stopBtn.onclick = ()=>{ abortAll=true; speechSynthesis?.cancel(); isPlaying=false; };
   rate.oninput = ()=> rateVal.textContent = parseFloat(rate.value).toFixed(1) + 'x';
 
-  setTimeout(()=>{ if(!('speechSynthesis' in window)) inappWarn.style.display='block'; }, 1000);
+  // In-app warning if speech is missing
+  setTimeout(()=>{ if(!('speechSynthesis' in window)) inappWarn.style.display='block'; }, 800);
+
   render();
 })();
