@@ -36,6 +36,8 @@
     #ttsBroken{display:none;margin-top:10px;padding:12px;border-radius:10px;background:#33200d;color:#ffe0b3;border:1px solid #8a5;line-height:1.5}
     #ttsBroken a{color:#fff;text-decoration:underline}
   </style>
+  <!-- 발음 보조 스타일 -->
+  <link rel="stylesheet" href="pron.css" />
 </head>
 <body>
   <div class="wrap">
@@ -186,7 +188,6 @@
       ["Monday","월요일"],["Tuesday","화요일"],["Wednesday","수요일"],["Thursday","목요일"],["Friday","금요일"],["Saturday","토요일"],["Sunday","일요일"],
       ["January","1월"],["February","2월"],["March","3월"],["April","4월"],["May","5월"],["June","6월"],["July","7월"],["August","8월"],["September","9월"],["October","10월"],["November","11월"],["December","12월"]
     ],
-
     "과일": [
       ["apple","사과"],["banana","바나나"],["orange","오렌지"],["grape","포도"],["strawberry","딸기"],
       ["watermelon","수박"],["melon","멜론"],["peach","복숭아"],["plum","자두"],["cherry","체리"],
@@ -199,10 +200,12 @@
       ["mulberry","오디"],["gooseberry","구스베리"],["boysenberry","보이젠베리"],["red currant","레드커런트"],["black currant","블랙커런트"],
       ["quince","모과"],["cantaloupe","칸탈루프"],["honeydew","허니듀"],["olive","올리브"],["tomato","토마토"]
     ]
-
   };
   </script>
 
+  <!-- 기존 앱 로직 -->
   <script src="app.v6.js?v=6" defer></script>
+  <!-- 발음표기 로직 -->
+  <script src="pron.js" defer></script>
 </body>
 </html>
